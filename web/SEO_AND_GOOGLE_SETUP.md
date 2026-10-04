@@ -47,7 +47,7 @@ and [Search generative AI control](https://support.google.com/webmasters/answer/
 
 ## Google Analytics 4
 
-1. The Napas web code is configured with measurement ID `G-H242BLRQXX`. Confirm
+1. The Napas web code is configured with measurement ID `G-DQX4ZZSNX2`. Confirm
    that it belongs to a web stream in the separate **Napas Jakarta** GA4
     property for `https://napasjakarta.com`, not the ServersUp property.
    If needed, create a separate property and web stream before linking it.

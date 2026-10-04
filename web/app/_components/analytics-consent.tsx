@@ -12,7 +12,7 @@ type ConsentChoice = "granted" | "denied";
 const CONSENT_STORAGE_KEY = "napas-analytics-consent";
 export const OPEN_PRIVACY_CHOICES_EVENT = "napas:open-privacy-choices";
 const MEASUREMENT_ID =
-  process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID?.trim() || "G-H242BLRQXX";
+  process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID?.trim() || "G-DQX4ZZSNX2";
 
 export function AnalyticsConsent() {
   const pathname = usePathname() ?? "/";
