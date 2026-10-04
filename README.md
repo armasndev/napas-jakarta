@@ -12,7 +12,7 @@
 </p>
 
 <p align="center">
-  <a href="https://napasjakarta.armasn.dev"><strong>Open the live app →</strong></a>
+  <a href="https://napasjakarta.com"><strong>Open the live app →</strong></a>
 </p>
 
 [![Tests](https://github.com/aasnani/napas-jakarta/actions/workflows/test.yml/badge.svg)](https://github.com/aasnani/napas-jakarta/actions/workflows/test.yml)
