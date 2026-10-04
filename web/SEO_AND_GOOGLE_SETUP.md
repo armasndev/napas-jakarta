@@ -1,7 +1,7 @@
 # Napas Jakarta search and analytics setup
 
 This setup is for Napas Jakarta's own site and GA4 property. The current public
-domain recorded for the project is `napasjakarta.armasn.dev`.
+domain recorded for the project is `napasjakarta.com`.
 
 ## Current baseline
 
@@ -16,7 +16,7 @@ changes; merging code alone does not prove that production has updated.
 
 ## Google Search Console
 
-1. The property is the verified **Domain property** `sc-domain:napasjakarta.armasn.dev`.
+1. The property is the verified **Domain property** `sc-domain:napasjakarta.com`.
    A service account for API access lives in
    `.claude/secrets/gsc-service-account.json` (git-ignored). Enable the Search
    Console API in that Cloud project if not already enabled. As of 2026-10-04
@@ -24,23 +24,23 @@ changes; merging code alone does not prove that production has updated.
    property shows **0 impressions all time**, so Googlebot has not reached the
    property since verification. Re-submitting the sitemap and running
    *Request indexing* on the changed URLs is the next step.
-2. Submit `https://napasjakarta.armasn.dev/sitemap.xml` under **Sitemaps**.
+2. Submit `https://napasjakarta.com/sitemap.xml` under **Sitemaps**.
    Use URL inspection for the homepage, About pages, both guide pages, and both
    Privacy pages:
-   - `https://napasjakarta.armasn.dev/`
-   - `https://napasjakarta.armasn.dev/about`
-   - `https://napasjakarta.armasn.dev/id/tentang`
-   - `https://napasjakarta.armasn.dev/air-quality-jakarta`
-   - `https://napasjakarta.armasn.dev/id/kualitas-udara-jakarta`
-   - `https://napasjakarta.armasn.dev/privacy`
-   - `https://napasjakarta.armasn.dev/id/privasi`
+   - `https://napasjakarta.com/`
+   - `https://napasjakarta.com/about`
+   - `https://napasjakarta.com/id/tentang`
+   - `https://napasjakarta.com/air-quality-jakarta`
+   - `https://napasjakarta.com/id/kualitas-udara-jakarta`
+   - `https://napasjakarta.com/privacy`
+   - `https://napasjakarta.com/id/privasi`
    The Privacy pages are indexable and included in the sitemap.
 3. In **Settings → Search generative AI**, verify Napas is included in Google
    Search's generative AI features. If the property inherits a parent setting,
    confirm that setting is also inclusion. Google says inclusion is the default
    for a property that does not inherit an exclusion.
 
-Domain properties cover their subdomains and protocols; `napasjakarta.armasn.dev`
+Domain properties cover their subdomains and protocols; `napasjakarta.com`
 does not merge data with a separate `armasn.dev` property. See Google's
 [property setup guide](https://support.google.com/webmasters/answer/34592?hl=en)
 and [Search generative AI control](https://support.google.com/webmasters/answer/16908024).
@@ -49,7 +49,7 @@ and [Search generative AI control](https://support.google.com/webmasters/answer/
 
 1. The Napas web code is configured with measurement ID `G-H242BLRQXX`. Confirm
    that it belongs to a web stream in the separate **Napas Jakarta** GA4
-   property for `https://napasjakarta.armasn.dev`, not the ServersUp property.
+    property for `https://napasjakarta.com`, not the ServersUp property.
    If needed, create a separate property and web stream before linking it.
 2. This measurement ID is a public ID, not a password or API secret. The optional
    `NEXT_PUBLIC_GA_MEASUREMENT_ID` build variable overrides that default; if

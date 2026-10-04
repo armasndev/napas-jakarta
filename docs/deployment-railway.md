@@ -28,7 +28,7 @@ NAPAS_API_ORIGIN=https://<fastapi-origin>
 
 The Gemini key must never be prefixed with `NEXT_PUBLIC_` or sent to the
 browser. The eventual public hostname is the Cloudflare-managed
-`napasjakarta.armasn.dev`; DNS and HTTPS cutover wait until the Railway origin
+`napasjakarta.com`; DNS and HTTPS cutover wait until the Railway origin
 has passed the replacement web and FastAPI smoke checks.
 
 The web and API services share one separately generated server-to-server token:

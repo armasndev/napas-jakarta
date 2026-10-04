@@ -40,7 +40,7 @@ Production runs in Railway under one project and environment with these
 responsibilities:
 
 - **Web:** public Next.js and Eve application at
-  [napasjakarta.armasn.dev](https://napasjakarta.armasn.dev).
+  [napasjakarta.com](https://napasjakarta.com).
 - **API:** private server-side data boundary used by the web and ingestion
   services.
 - **Ingestion:** scheduled refresh of official station data.

@@ -1,6 +1,6 @@
 const configuredSiteUrl = process.env.NEXT_PUBLIC_SITE_URL?.trim();
 
-export const SITE_URL = (configuredSiteUrl || "https://napasjakarta.armasn.dev").replace(/\/+$/, "");
+export const SITE_URL = (configuredSiteUrl || "https://napasjakarta.com").replace(/\/+$/, "");
 export const SITE_NAME = "Napas Jakarta";
 export const HOME_TITLES = {
   en: "Jakarta Air Quality Map: PM2.5 & ISPU | Napas Jakarta",
