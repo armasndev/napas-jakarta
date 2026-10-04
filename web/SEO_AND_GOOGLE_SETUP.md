@@ -16,11 +16,14 @@ changes; merging code alone does not prove that production has updated.
 
 ## Google Search Console
 
-1. Open the existing Search Console **Domain property** for
-   `napasjakarta.armasn.dev` using the Google account that owns it. Confirm its
-   status is verified; if it is already verified, no token or DNS change is
-   needed. If Search Console shows verification is still pending, follow the
-   method shown for that property.
+1. The property is the verified **Domain property** `sc-domain:napasjakarta.armasn.dev`.
+   A service account for API access lives in
+   `.claude/secrets/gsc-service-account.json` (git-ignored). Enable the Search
+   Console API in that Cloud project if not already enabled. As of 2026-10-04
+   the sitemap is registered in GSC but has **never been crawled** and the
+   property shows **0 impressions all time**, so Googlebot has not reached the
+   property since verification. Re-submitting the sitemap and running
+   *Request indexing* on the changed URLs is the next step.
 2. Submit `https://napasjakarta.armasn.dev/sitemap.xml` under **Sitemaps**.
    Use URL inspection for the homepage, About pages, both guide pages, and both
    Privacy pages:

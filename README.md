@@ -12,8 +12,7 @@
 </p>
 
 <p align="center">
-  <a href="https://web-production-e07b9.up.railway.app"><strong>Open the live app →</strong></a>
-  · <a href="https://web-production-e07b9.up.railway.app/docs">API</a>
+  <a href="https://napasjakarta.armasn.dev"><strong>Open the live app →</strong></a>
 </p>
 
 [![Tests](https://github.com/aasnani/napas-jakarta/actions/workflows/test.yml/badge.svg)](https://github.com/aasnani/napas-jakarta/actions/workflows/test.yml)
