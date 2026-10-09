@@ -2335,3 +2335,26 @@ textarea {
     max-width: none;
   }
 }
+
+.station-readings {
+  display: grid;
+  gap: 6px;
+  margin: 12px 0 0;
+  font-size: 13px;
+}
+
+.station-readings div {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.station-readings dt {
+  color: #4b6470;
+}
+
+.station-readings dd {
+  margin: 0;
+  font-weight: 600;
+  text-align: right;
+}

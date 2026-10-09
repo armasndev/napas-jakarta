@@ -28,6 +28,7 @@ import {
   type DemoStation,
 } from "@/lib/napas";
 import { normalizeHeatmapWeight, STATION_HEATMAP_LAYER_ID } from "@/lib/map-heatmap";
+import { AQI_BANDS, AQI_UNAVAILABLE_COLOR, aqiBand, type AqiBandKey } from "@/lib/aqi";
 import { MAP_LAYER_DEFAULTS, mapLayerMatches, type MapLayerKey } from "@/lib/map-layers";
 
 const MAP_STYLE_URL =
@@ -132,24 +133,56 @@ const CATEGORY_COLOR: Record<AirQualityCategory, string> = {
   "Stale / missing": "#7B8790",
 };
 
-function stationCollection(stations: readonly DemoStation[], selectedId?: string) {
+type IndexMode = "aqi" | "ispu";
+
+const AQI_LABEL_KEY = {
+  good: "aqiBandGood",
+  moderate: "aqiBandModerate",
+  usg: "aqiBandUsg",
+  unhealthy: "aqiBandUnhealthy",
+  very_unhealthy: "aqiBandVeryUnhealthy",
+} as const satisfies Record<AqiBandKey, string>;
+
+function aqiBandLabel(aqi: number | null, copy: ReturnType<typeof getUiCopy>): string | null {
+  const band = aqiBand(aqi);
+  return band ? copy.map[AQI_LABEL_KEY[band.key]] : null;
+}
+
+function stationCollection(
+  stations: readonly DemoStation[],
+  selectedId: string | undefined,
+  indexMode: IndexMode,
+) {
   return {
     type: "FeatureCollection" as const,
-    features: stations.map((station) => ({
-      type: "Feature" as const,
-      geometry: {
-        type: "Point" as const,
-        coordinates: [station.longitude, station.latitude] as [number, number],
-      },
-      properties: {
-        category: station.category,
-        color: CATEGORY_COLOR[station.category],
-        id: station.id,
-        selected: station.id === selectedId,
-        heatWeight: normalizeHeatmapWeight(station.ispu),
-        value: station.ispu === null ? "—" : String(station.ispu),
-      },
-    })),
+    features: stations.map((station) => {
+      const aqi = station.aqi ?? null;
+      const band = aqiBand(aqi);
+      const aqiMode = indexMode === "aqi";
+      const color = aqiMode
+        ? band?.color ?? AQI_UNAVAILABLE_COLOR
+        : CATEGORY_COLOR[station.category];
+      const textColor = aqiMode
+        ? band?.textColor ?? "#FFFFFF"
+        : station.category === "Moderate" ? "#172B2B" : "#FFFFFF";
+      const value = aqiMode ? aqi : station.ispu;
+      return {
+        type: "Feature" as const,
+        geometry: {
+          type: "Point" as const,
+          coordinates: [station.longitude, station.latitude] as [number, number],
+        },
+        properties: {
+          category: station.category,
+          color,
+          textColor,
+          id: station.id,
+          selected: station.id === selectedId,
+          heatWeight: normalizeHeatmapWeight(station.ispu),
+          value: value === null ? "—" : String(value),
+        },
+      };
+    }),
   };
 }
 
@@ -211,6 +244,10 @@ function toMapStation(row: StationCatalogResponse["stations"][number], language:
     district: row.district,
     id: row.id,
     ispu: row.ispu,
+    aqi: row.aqi,
+    aqiCategory: row.aqi_category,
+    aqiHours: row.aqi_hours,
+    pm25Mean24h: row.aqi_pm25_24h_mean,
     latitude: row.latitude,
     longitude: row.longitude,
     name: row.name,
@@ -260,6 +297,7 @@ export function WorkspaceMap({
   const [layersOpen, setLayersOpen] = useState(false);
   const [stationListOpen, setStationListOpen] = useState(false);
   const [heatmapVisible, setHeatmapVisible] = useState(false);
+  const [indexMode, setIndexMode] = useState<IndexMode>("aqi");
   const stationDialogRef = useRef<HTMLDialogElement>(null);
   const mobileLegendDialogRef = useRef<HTMLDialogElement>(null);
   const [layers, setLayers] = useState(LAYER_DEFAULTS);
@@ -384,7 +422,7 @@ export function WorkspaceMap({
 
     map.on("load", () => {
       map.addSource("napas-stations", {
-        data: stationCollection([], selectedStationId),
+        data: stationCollection([], selectedStationId, indexMode),
         type: "geojson",
       });
       map.addLayer({
@@ -469,7 +507,7 @@ export function WorkspaceMap({
           "text-size": 10,
         },
         paint: {
-          "text-color": ["case", ["==", ["get", "category"], "Moderate"], "#172B2B", "#FFFFFF"],
+          "text-color": ["get", "textColor"],
         },
         source: "napas-stations",
         type: "symbol",
@@ -501,8 +539,8 @@ export function WorkspaceMap({
   useEffect(() => {
     const source = mapRef.current?.getSource("napas-stations") as GeoJSONSource | undefined;
     if (!source || !mapReady) return;
-    source.setData(stationCollection(visibleStations, selectedId));
-  }, [mapReady, selectedId, visibleStations]);
+    source.setData(stationCollection(visibleStations, selectedId, indexMode));
+  }, [indexMode, mapReady, selectedId, visibleStations]);
 
   useEffect(() => {
     const map = mapRef.current;
@@ -646,6 +684,22 @@ export function WorkspaceMap({
               trackNapasEvent("map_layer_toggled", { layer: "heatmap" });
             }} />
             {heatmapVisible ? <p className="layer-note">{copy.map.heatmapDerived}</p> : null}
+            <div className="layer-heading">{copy.map.indexLabel}</div>
+            <label className="layer-toggle">
+              <input checked={indexMode === "aqi"} name="index-mode" onChange={() => {
+                setIndexMode("aqi");
+                trackNapasEvent("map_index_changed", { index: "aqi" });
+              }} type="radio" />
+              {copy.map.indexAqi}
+            </label>
+            <label className="layer-toggle">
+              <input checked={indexMode === "ispu"} name="index-mode" onChange={() => {
+                setIndexMode("ispu");
+                trackNapasEvent("map_index_changed", { index: "ispu" });
+              }} type="radio" />
+              {copy.map.indexIspu}
+            </label>
+            {indexMode === "aqi" ? <p className="layer-note">{copy.map.aqiDerivedNote}</p> : null}
             <div className="layer-heading">{copy.map.geography}</div>
             <LayerToggle checked={layers.roads} label={copy.map.roadNetwork} onChange={() => toggleLayer("roads")} />
             <LayerToggle checked={layers.boundaries} label={copy.map.municipalityBoundaries} onChange={() => toggleLayer("boundaries")} />
@@ -686,7 +740,7 @@ export function WorkspaceMap({
 
       <div className="map-dock">
         <div className="legend" aria-label={copy.map.legendAria}>
-          <LegendContent language={language} />
+          <LegendContent indexMode={indexMode} language={language} />
         </div>
         {selectedStation ? (
           <article className="station-detail" aria-live="polite">
@@ -699,6 +753,30 @@ export function WorkspaceMap({
                 <XIcon aria-hidden="true" />
               </button>
             </div>
+            <dl className="station-readings">
+              <div>
+                <dt>{copy.map.detailAqi}</dt>
+                <dd>{selectedStation.aqi === null || selectedStation.aqi === undefined
+                  ? copy.map.aqiUnavailable
+                  : [String(selectedStation.aqi), aqiBandLabel(selectedStation.aqi, copy)].filter(Boolean).join(" · ")}</dd>
+              </div>
+              <div>
+                <dt>{copy.map.detailIspu}</dt>
+                <dd>{[selectedStation.ispu ?? "—", selectedStation.category].join(" · ")}</dd>
+              </div>
+              <div>
+                <dt>{copy.map.detailPm25}</dt>
+                <dd>{selectedStation.pm25 === null ? "—" : `${selectedStation.pm25} µg/m³`}</dd>
+              </div>
+              <div>
+                <dt>{copy.map.detailObservedAt}</dt>
+                <dd>{selectedStation.observedAt}</dd>
+              </div>
+              <div>
+                <dt>{copy.map.detailSource}</dt>
+                <dd>{selectedStation.source}</dd>
+              </div>
+            </dl>
           </article>
         ) : (
           <article className="station-detail station-detail-empty" aria-live="polite">
@@ -737,7 +815,7 @@ export function WorkspaceMap({
           </button>
         </div>
         <div className="mobile-legend-content">
-          <LegendContent language={language} />
+          <LegendContent indexMode={indexMode} language={language} />
         </div>
       </dialog>
 
@@ -756,8 +834,8 @@ export function WorkspaceMap({
           </div>
           <div className="station-table-wrap">
             <table>
-              <thead><tr><th scope="col">{copy.map.tableStation}</th><th scope="col">{copy.map.tableDistrict}</th><th scope="col">{copy.map.tableIspu}</th><th scope="col">{copy.map.tablePm25}</th><th scope="col">{copy.map.tableStatus}</th></tr></thead>
-          <tbody>{visibleStations.map((station) => <tr key={station.id}><td><button className="table-station" onClick={() => { selectStation(station, "station_list"); setStationListOpen(false); }} type="button">{station.name}</button></td><td>{localizedDistrict(station.district, language)}</td><td>{station.ispu ?? "—"}</td><td>{station.pm25 === null ? "—" : `${station.pm25} µg/m³`}</td><td className={cn("table-status", categoryKey[station.category])}>{localizedCategory(station.category, language)}</td></tr>)}</tbody>
+              <thead><tr><th scope="col">{copy.map.tableStation}</th><th scope="col">{copy.map.tableDistrict}</th><th scope="col">{copy.map.tableIspu}</th><th scope="col">{copy.map.tableAqi}</th><th scope="col">{copy.map.tablePm25}</th><th scope="col">{copy.map.tableStatus}</th></tr></thead>
+          <tbody>{visibleStations.map((station) => <tr key={station.id}><td><button className="table-station" onClick={() => { selectStation(station, "station_list"); setStationListOpen(false); }} type="button">{station.name}</button></td><td>{localizedDistrict(station.district, language)}</td><td>{station.ispu ?? "—"}</td><td>{station.aqi ?? "—"}</td><td>{station.pm25 === null ? "—" : `${station.pm25} µg/m³`}</td><td className={cn("table-status", categoryKey[station.category])}>{localizedCategory(station.category, language)}</td></tr>)}</tbody>
             </table>
           </div>
       </dialog>
@@ -790,10 +868,16 @@ function KpiCard({ detail, label, networkLabel, share, tone = "good", value }: {
   );
 }
 
-function LegendContent({ language }: { readonly language: Language }) {
+function LegendContent({ indexMode, language }: { readonly indexMode: IndexMode; readonly language: Language }) {
   const copy = getUiCopy(language);
   const termDefinitions = (
     <dl className="legend-terms" aria-label={copy.map.airQualityLevel}>
+      {indexMode === "aqi" ? (
+        <div className="legend-term">
+          <dt>{copy.map.aqiTerm}</dt>
+          <dd>{copy.map.aqiDefinition}</dd>
+        </div>
+      ) : null}
       <div className="legend-term">
         <dt>{copy.map.ispuTerm}</dt>
         <dd>{copy.map.ispuDefinition}</dd>
@@ -811,12 +895,27 @@ function LegendContent({ language }: { readonly language: Language }) {
   return (
     <>
       <h3>{copy.map.legendTitle}</h3>
-      <div className="legend-grid">
-        <LegendItem color="good" label={copy.map.good} range="0–50" />
-        <LegendItem color="moderate" label={copy.map.moderate} range="51–100" />
-        <LegendItem color="unhealthy" label={copy.map.unhealthy} range="101–200" />
-        <LegendItem color="stale" label={copy.map.staleMissing} />
-      </div>
+      {indexMode === "aqi" ? (
+        <div className="legend-grid">
+          {AQI_BANDS.map((band) => (
+            <LegendItem
+              color=""
+              key={band.key}
+              label={copy.map[AQI_LABEL_KEY[band.key]]}
+              range={band.range}
+              swatch={band.color}
+            />
+          ))}
+          <LegendItem color="stale" label={copy.map.staleMissing} />
+        </div>
+      ) : (
+        <div className="legend-grid">
+          <LegendItem color="good" label={copy.map.good} range="0–50" />
+          <LegendItem color="moderate" label={copy.map.moderate} range="51–100" />
+          <LegendItem color="unhealthy" label={copy.map.unhealthy} range="101–200" />
+          <LegendItem color="stale" label={copy.map.staleMissing} />
+        </div>
+      )}
       <div className="legend-key" aria-label={copy.map.geography}>
         <span><i className="key-water" />{copy.map.waterway}</span>
         <span><i className="key-road" />{copy.map.primaryRoad}</span>
@@ -828,8 +927,23 @@ function LegendContent({ language }: { readonly language: Language }) {
   );
 }
 
-function LegendItem({ color, label, range }: { readonly color: string; readonly label: string; readonly range?: string }) {
-  return <div className="legend-item"><i className={`legend-dot ${color}`} /><span>{label} {range ? <small>{range}</small> : null}</span></div>;
+function LegendItem({
+  color,
+  label,
+  range,
+  swatch,
+}: {
+  readonly color: string;
+  readonly label: string;
+  readonly range?: string;
+  readonly swatch?: string;
+}) {
+  return (
+    <div className="legend-item">
+      <i className={`legend-dot ${color}`} style={swatch ? { background: swatch } : undefined} />
+      <span>{label} {range ? <small>{range}</small> : null}</span>
+    </div>
+  );
 }
 
 function LayerToggle({ checked, label, onChange }: { readonly checked: boolean; readonly label: string; readonly onChange: () => void }) {
