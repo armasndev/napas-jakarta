@@ -1,6 +1,6 @@
 # Napas Jakarta application state
 
-**Last verified:** 29 September 2026 (Asia/Jakarta)
+**Last verified:** 9 October 2026 (Asia/Jakarta)
 
 This is the concise operational checkpoint for Napas Jakarta. It records the
 broad product, data, deployment, security, and observability state so future
@@ -127,8 +127,8 @@ status, and public health endpoint after each release.
 
 - The web code defines canonical metadata, bilingual air-quality guides and
   About pages, `robots.txt`, and an XML sitemap. The sitemap lists the public
-  homepage, About pages, both guides, and bilingual Privacy pages with language
-  alternates. The homepage header links to the air-quality guide in the
+  homepage, the Indonesian homepage, About pages, both guides, both ISPU explainer
+  pages, and bilingual Privacy pages. The homepage header links to the air-quality guide in the
   currently selected language.
 - Google Analytics support is opt-in and uses Napas's configured public
   measurement ID, with `NEXT_PUBLIC_GA_MEASUREMENT_ID` available as a build-time
