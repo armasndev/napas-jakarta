@@ -215,6 +215,9 @@ def build_station_catalog(
             overall_category = "Moderate"
         else:
             overall_category = "Unhealthy"
+    # AQI counts use the same reporting stations. Moderate is AQI 51 to 100 and
+    # unhealthy is AQI 101 and above, which covers the EPA bands above Moderate.
+    reporting_aqi = [int(row["aqi"]) for row in reporting if row.get("aqi") is not None]
     return {
         "contract_version": 1,
         "stations": stations,
@@ -225,6 +228,8 @@ def build_station_catalog(
             "moderate_count": counts["Moderate"],
             "unhealthy_count": counts["Unhealthy"],
             "stale_count": counts["Stale / missing"],
+            "aqi_moderate_count": sum(51 <= value <= 100 for value in reporting_aqi),
+            "aqi_unhealthy_count": sum(value >= 101 for value in reporting_aqi),
             "latest_observed_at": newest,
             "overall_category": overall_category,
             "source_mode": source_mode,

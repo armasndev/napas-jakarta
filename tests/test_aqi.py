@@ -112,3 +112,30 @@ def test_assistant_latest_reading_includes_station_aqi():
     assert latest["aqi"] == 53
     assert latest["aqi_category"] == "Moderate"
     assert latest["ispu"] == 0
+
+
+def test_catalog_summary_counts_aqi_bands_among_reporting_stations():
+    from datetime import UTC, datetime
+
+    from app.api import build_station_catalog
+
+    records = [
+        {"station_id": f"s{i}", "station": f"S{i}", "district": "Test", "latitude": -6.2,
+         "longitude": 106.8, "source": "https://udara.jakarta.go.id/"}
+        for i in range(3)
+    ]
+    observed = datetime(2026, 10, 9, 11, 0, tzinfo=UTC).isoformat()
+    latest = [
+        {"station_id": f"s{i}", "station": f"S{i}", "district": "Test", "concentration": 30.0,
+         "ispu": 90, "category": "Moderate", "observed_at": observed,
+         "source": "https://udara.jakarta.go.id/", "freshness": {"status": "fresh", "stale": False}}
+        for i in range(3)
+    ]
+    aqi = {
+        "s0": {"aqi": 60, "category": "Moderate", "pm25_24h_mean": 20.0, "hours": 20, "window_end": observed},
+        "s1": {"aqi": 120, "category": "Unhealthy for Sensitive Groups", "pm25_24h_mean": 40.0, "hours": 20, "window_end": observed},
+        "s2": {"aqi": 180, "category": "Unhealthy", "pm25_24h_mean": 70.0, "hours": 20, "window_end": observed},
+    }
+    summary = build_station_catalog(records, latest, "live", aqi_by_station=aqi)["summary"]
+    assert summary["aqi_moderate_count"] == 1
+    assert summary["aqi_unhealthy_count"] == 2

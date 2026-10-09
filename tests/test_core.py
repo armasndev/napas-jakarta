@@ -213,6 +213,8 @@ def test_station_catalog_preserves_coordinates_and_missing_observations():
         "moderate_count": 0,
         "unhealthy_count": 0,
         "stale_count": 2,
+        "aqi_moderate_count": 0,
+        "aqi_unhealthy_count": 0,
         "latest_observed_at": None,
         "overall_category": "Stale / missing",
         "source_mode": "live",
