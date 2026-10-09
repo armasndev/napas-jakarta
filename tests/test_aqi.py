@@ -99,3 +99,16 @@ def test_station_aqi_ignores_other_pollutants():
     now = datetime(2026, 10, 9, 12, 0, tzinfo=UTC)
     rows = _hourly("s1", datetime(2026, 10, 8, 13, 0, tzinfo=UTC), [90.0] * 23, pollutant="O3")
     assert station_pm25_aqi(rows, now) == {}
+
+
+def test_assistant_latest_reading_includes_station_aqi():
+    from datetime import UTC, datetime
+
+    from app.tools import get_latest_measurements
+
+    now = datetime(2026, 10, 9, 12, 0, tzinfo=UTC)
+    rows = _hourly("s1", datetime(2026, 10, 8, 13, 0, tzinfo=UTC), [10.0] * 23)
+    latest = get_latest_measurements(rows, now=now)[0]
+    assert latest["aqi"] == 53
+    assert latest["aqi_category"] == "Moderate"
+    assert latest["ispu"] == 0
