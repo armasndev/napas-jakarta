@@ -49,8 +49,8 @@ responsibilities:
 
 The web service is rooted at `/web`; the API and ingestion services are rooted
 at `/`. The web readiness check uses `/api/health` and includes Eve readiness.
-Ingestion runs `python -m ingestion.railway_cron` every two hours
-(`0 */2 * * *`). PostgreSQL remains a shared runtime store and is not tied to a
+Ingestion runs `python -m ingestion.railway_cron` every hour
+(`0 * * * *`), so each station accumulates hourly history for 24-hour means. PostgreSQL remains a shared runtime store and is not tied to a
 repository commit.
 
 Cloudflare manages the custom-domain DNS path. The web, API, and ingestion
