@@ -33,6 +33,7 @@ ALIASES = {
     "averaging_period": ("averaging_period", "periode_rata_rata", "periode"),
     "quality_flag": ("quality_flag", "quality", "status_data"),
     "fetched_at": ("fetched_at", "waktu_ambil"),
+    "dominant_metric": ("dominant_metric", "dominantmetric"),
 }
 
 
@@ -62,6 +63,11 @@ def parse_rows(rows: Iterable[dict[str, Any]], source_url: str) -> list[Measurem
                              if values["concentration"] not in (None, "") else None)
         except (TypeError, ValueError) as exc:
             raise ValueError(f"row {number} has invalid numeric/date values") from exc
+        # The portal's raw value belongs to its dominant pollutant. Only keep it as
+        # PM2.5 when the portal says PM2.5 is dominant; otherwise abstain.
+        dominant = values["dominant_metric"]
+        if dominant is not None and dominant.upper().replace(".", "") != "PM25":
+            concentration = None
         result.append(
             Measurement(
                 station_id=values["station_id"], station_name=values["station_name"],
@@ -103,6 +109,7 @@ def spku_html_rows(text: str) -> list[dict[str, Any]]:
             "district": item.get("area") or item.get("kota"),
             "observed_at": item.get("dominantMetricTime"),
             "concentration": item.get("dominantRawValue"),
+            "dominant_metric": item.get("dominantMetric"),
             "ispu_value": item.get("ispu"),
             "ispu_category": item.get("status"),
         })
