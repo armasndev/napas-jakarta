@@ -60,6 +60,10 @@ status, and public health endpoint after each release.
 
 ## Data and freshness
 
+- The map defaults to a derived US EPA PM2.5 AQI from each station's trailing
+  24-hour mean (18 hourly readings required). ISPU, the official Jakarta index,
+  is one toggle away and stays on the station card. The derived AQI is labelled
+  as a Napas calculation, never as an official figure.
 - The primary live source is the official Jakarta air-quality monitoring
   network, with source and station provenance retained for attribution.
 - Ingestion writes the current catalog and observations to Railway PostgreSQL.
