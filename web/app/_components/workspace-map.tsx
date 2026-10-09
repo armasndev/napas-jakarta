@@ -617,6 +617,13 @@ export function WorkspaceMap({
         </div>
 
         <div className="filters" data-od-id="map-filters">
+          <IndexSegmentedControl
+            aqiLabel={copy.map.indexAqi}
+            ispuLabel={copy.map.indexIspu}
+            label={copy.map.indexLabel}
+            onChange={changeIndexMode}
+            value={indexMode}
+          />
           <MapFilterDropdown
             id="air-quality-level-filter"
             icon={<WindIcon aria-hidden="true" />}
@@ -628,13 +635,6 @@ export function WorkspaceMap({
             }}
             options={airQualityFilterOptions(indexMode, copy)}
             value={categoryFilter}
-          />
-          <IndexSegmentedControl
-            aqiLabel={copy.map.indexAqi}
-            ispuLabel={copy.map.indexIspu}
-            label={copy.map.indexLabel}
-            onChange={changeIndexMode}
-            value={indexMode}
           />
           <MapFilterDropdown
             id="district-filter"
@@ -959,13 +959,13 @@ function IndexSegmentedControl({
       <fieldset className="index-segment" data-index={value}>
         <legend className="visually-hidden">{label}</legend>
         <span aria-hidden="true" className="index-segment-thumb" />
-        <label className="index-segment-option" title={ispuLabel}>
-          <input checked={value === "ispu"} name="index-mode" onChange={() => onChange("ispu")} type="radio" />
-          <span>ISPU</span>
-        </label>
         <label className="index-segment-option" title={aqiLabel}>
           <input checked={value === "aqi"} name="index-mode" onChange={() => onChange("aqi")} type="radio" />
           <span>AQI</span>
+        </label>
+        <label className="index-segment-option" title={ispuLabel}>
+          <input checked={value === "ispu"} name="index-mode" onChange={() => onChange("ispu")} type="radio" />
+          <span>ISPU</span>
         </label>
       </fieldset>
     </div>
