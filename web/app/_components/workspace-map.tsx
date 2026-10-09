@@ -393,8 +393,9 @@ export function WorkspaceMap({
     ? stations.find((station) => station.id === selectedId)
     : undefined;
   const reportingCount = stationSummary?.reporting_count ?? 0;
-  const moderateCount = stationSummary?.moderate_count ?? 0;
-  const unhealthyCount = stationSummary?.unhealthy_count ?? 0;
+  // Same stations in both modes; only the category counts change with the index.
+  const moderateCount = (indexMode === "aqi" ? stationSummary?.aqi_moderate_count : stationSummary?.moderate_count) ?? 0;
+  const unhealthyCount = (indexMode === "aqi" ? stationSummary?.aqi_unhealthy_count : stationSummary?.unhealthy_count) ?? 0;
   const stationCount = stationSummary?.station_count ?? 0;
   const reportingShare = stationSummary ? percentageOf(reportingCount, stationCount) : undefined;
   const moderateShare = stationSummary ? percentageOf(moderateCount, stationCount) : undefined;
@@ -611,8 +612,8 @@ export function WorkspaceMap({
             tone="reporting"
             value={stationSummary ? `${reportingCount}/${stationCount}` : "—"}
           />
-          <KpiCard detail={stationSummary ? copy.map.moderateDetail : copy.map.loading} label={copy.map.moderate} networkLabel={copy.map.ofNetwork} share={moderateShare} value={stationSummary ? String(moderateCount) : "—"} tone="moderate" />
-          <KpiCard detail={stationSummary ? copy.map.unhealthyDetail : copy.map.loading} label={copy.map.unhealthy} networkLabel={copy.map.ofNetwork} share={unhealthyShare} value={stationSummary ? String(unhealthyCount) : "—"} tone="unhealthy" />
+          <KpiCard detail={stationSummary ? (indexMode === "aqi" ? copy.map.moderateDetailAqi : copy.map.moderateDetail) : copy.map.loading} label={copy.map.moderate} networkLabel={copy.map.ofNetwork} share={moderateShare} value={stationSummary ? String(moderateCount) : "—"} tone="moderate" />
+          <KpiCard detail={stationSummary ? (indexMode === "aqi" ? copy.map.unhealthyDetailAqi : copy.map.unhealthyDetail) : copy.map.loading} label={indexMode === "aqi" ? copy.map.unhealthyAqiLabel : copy.map.unhealthy} networkLabel={copy.map.ofNetwork} share={unhealthyShare} value={stationSummary ? String(unhealthyCount) : "—"} tone="unhealthy" />
         </div>
 
         <div className="filters" data-od-id="map-filters">

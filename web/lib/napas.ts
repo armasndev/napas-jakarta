@@ -49,6 +49,8 @@ export type StationCatalogResponse = {
     moderate_count: number;
     unhealthy_count: number;
     stale_count: number;
+    aqi_moderate_count?: number;
+    aqi_unhealthy_count?: number;
     latest_observed_at: string | null;
     overall_category: AirQualityCategory;
     source_mode: "live" | "demo";
