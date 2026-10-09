@@ -629,6 +629,13 @@ export function WorkspaceMap({
             options={airQualityFilterOptions(indexMode, copy)}
             value={categoryFilter}
           />
+          <IndexSegmentedControl
+            aqiLabel={copy.map.indexAqi}
+            ispuLabel={copy.map.indexIspu}
+            label={copy.map.indexLabel}
+            onChange={changeIndexMode}
+            value={indexMode}
+          />
           <MapFilterDropdown
             id="district-filter"
             icon={<MapPinIcon aria-hidden="true" />}
@@ -654,6 +661,7 @@ export function WorkspaceMap({
             <span>{copy.map.stationList}</span>
           </button>
         </div>
+        {indexMode === "aqi" ? <p className="index-note">{copy.map.aqiDerivedNote}</p> : null}
       </header>
 
       <div className="map-stage" id="map-stage">
@@ -687,16 +695,6 @@ export function WorkspaceMap({
             }} />
             {indexMode === "aqi" ? <p className="layer-note">{copy.map.heatmapNeedsIspu}</p> : null}
             {heatmapOn ? <p className="layer-note">{copy.map.heatmapDerived}</p> : null}
-            <div className="layer-heading">{copy.map.indexLabel}</div>
-            <label className="layer-toggle">
-              <input checked={indexMode === "aqi"} name="index-mode" onChange={() => changeIndexMode("aqi")} type="radio" />
-              {copy.map.indexAqi}
-            </label>
-            <label className="layer-toggle">
-              <input checked={indexMode === "ispu"} name="index-mode" onChange={() => changeIndexMode("ispu")} type="radio" />
-              {copy.map.indexIspu}
-            </label>
-            {indexMode === "aqi" ? <p className="layer-note">{copy.map.aqiDerivedNote}</p> : null}
             <div className="layer-heading">{copy.map.geography}</div>
             <LayerToggle checked={layers.roads} label={copy.map.roadNetwork} onChange={() => toggleLayer("roads")} />
             <LayerToggle checked={layers.boundaries} label={copy.map.municipalityBoundaries} onChange={() => toggleLayer("boundaries")} />
@@ -891,7 +889,7 @@ function LegendContent({ indexMode, language }: { readonly indexMode: IndexMode;
   );
   return (
     <>
-      <h3>{copy.map.legendTitle}</h3>
+      <h3>{indexMode === "aqi" ? copy.map.legendTitleAqi : copy.map.legendTitle}</h3>
       {indexMode === "aqi" ? (
         <div className="legend-grid">
           {AQI_BANDS.map((band) => (
@@ -939,6 +937,38 @@ function LegendItem({
     <div className="legend-item">
       <i className={`legend-dot ${color}`} style={swatch ? { background: swatch } : undefined} />
       <span>{label} {range ? <small>{range}</small> : null}</span>
+    </div>
+  );
+}
+
+function IndexSegmentedControl({
+  aqiLabel,
+  ispuLabel,
+  label,
+  onChange,
+  value,
+}: {
+  readonly aqiLabel: string;
+  readonly ispuLabel: string;
+  readonly label: string;
+  readonly onChange: (mode: IndexMode) => void;
+  readonly value: IndexMode;
+}) {
+  return (
+    <div className="filter-label">
+      <span aria-hidden="true">{label}</span>
+      <fieldset className="index-segment" data-index={value}>
+        <legend className="visually-hidden">{label}</legend>
+        <span aria-hidden="true" className="index-segment-thumb" />
+        <label className="index-segment-option" title={aqiLabel}>
+          <input checked={value === "aqi"} name="index-mode" onChange={() => onChange("aqi")} type="radio" />
+          <span>AQI</span>
+        </label>
+        <label className="index-segment-option" title={ispuLabel}>
+          <input checked={value === "ispu"} name="index-mode" onChange={() => onChange("ispu")} type="radio" />
+          <span>ISPU</span>
+        </label>
+      </fieldset>
     </div>
   );
 }
