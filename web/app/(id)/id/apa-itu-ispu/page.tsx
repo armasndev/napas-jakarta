@@ -89,6 +89,13 @@ export default function IspuGuideId() {
         </p>
       </section>
 
+      <section aria-labelledby="aqi-difference" className={styles.section}>
+        <h2 id="aqi-difference">Apa bedanya dengan AQI?</h2>
+        <p>
+          AQI adalah indeks US EPA yang dipakai banyak aplikasi kualitas udara. Napas Jakarta menampilkan AQI PM2.5 yang dihitung sendiri di samping nilai ISPU resmi. Kedua indeks memakai skala dan batas kategori yang berbeda, jadi jangan membandingkannya secara langsung.
+        </p>
+      </section>
+
       <section aria-labelledby="verifikasi" className={styles.section}>
         <h2 id="verifikasi">Di mana saya dapat memeriksa data resmi?</h2>
         <p>

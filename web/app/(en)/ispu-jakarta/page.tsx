@@ -91,6 +91,13 @@ export default function IspuGuideEn() {
         </p>
       </section>
 
+      <section aria-labelledby="aqi-difference" className={styles.section}>
+        <h2 id="aqi-difference">How is this different from AQI?</h2>
+        <p>
+          AQI is the US EPA index, used by many air-quality apps. Napas Jakarta shows a derived PM2.5 AQI next to the official ISPU value. The two use different scales and category limits, so do not compare them directly.
+        </p>
+      </section>
+
       <section aria-labelledby="verify" className={styles.section}>
         <h2 id="verify">Where can I verify the official data?</h2>
         <p>
