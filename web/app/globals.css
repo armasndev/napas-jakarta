@@ -2358,3 +2358,7 @@ textarea {
   font-weight: 600;
   text-align: right;
 }
+
+.layer-toggle:has(input:disabled) {
+  opacity: 0.5;
+}

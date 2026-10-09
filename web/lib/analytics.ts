@@ -37,7 +37,10 @@ export type NapasAnalyticsEventParameters = {
   };
   map_index_changed: { index: "aqi" | "ispu" };
   map_filter_changed:
-    | { filter: "air_quality"; value: "all" | "good" | "moderate" | "unhealthy" | "stale" }
+    | {
+        filter: "air_quality";
+        value: "all" | "good" | "moderate" | "unhealthy" | "usg" | "very_unhealthy" | "stale";
+      }
     | { filter: "district"; value: "all" | "specific" };
   map_zoom_control_clicked: { direction: "in" | "out" };
 };

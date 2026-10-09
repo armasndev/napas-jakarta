@@ -29,6 +29,7 @@ import {
 } from "@/lib/napas";
 import { normalizeHeatmapWeight, STATION_HEATMAP_LAYER_ID } from "@/lib/map-heatmap";
 import { AQI_BANDS, AQI_UNAVAILABLE_COLOR, aqiBand, type AqiBandKey } from "@/lib/aqi";
+import { matchesCategoryFilter, type FilterCategory, type IndexMode } from "@/lib/station-filter";
 import { MAP_LAYER_DEFAULTS, mapLayerMatches, type MapLayerKey } from "@/lib/map-layers";
 
 const MAP_STYLE_URL =
@@ -40,7 +41,7 @@ const JAKARTA_BOUNDS: [[number, number], [number, number]] = [
   [107.18, -5.6],
 ];
 
-type FilterCategory = "all" | "good" | "moderate" | "unhealthy" | "stale";
+
 
 type MapFilterOption = {
   readonly label: string;
@@ -132,8 +133,6 @@ const CATEGORY_COLOR: Record<AirQualityCategory, string> = {
   Unhealthy: "#D94E3E",
   "Stale / missing": "#7B8790",
 };
-
-type IndexMode = "aqi" | "ispu";
 
 const AQI_LABEL_KEY = {
   good: "aqiBandGood",
@@ -298,6 +297,14 @@ export function WorkspaceMap({
   const [stationListOpen, setStationListOpen] = useState(false);
   const [heatmapVisible, setHeatmapVisible] = useState(false);
   const [indexMode, setIndexMode] = useState<IndexMode>("aqi");
+  // The heatmap is built from ISPU only, so it is off while AQI is shown.
+  const heatmapOn = heatmapVisible && indexMode === "ispu";
+
+  const changeIndexMode = (mode: IndexMode) => {
+    setIndexMode(mode);
+    setCategoryFilter("all");
+    trackNapasEvent("map_index_changed", { index: mode });
+  };
   const stationDialogRef = useRef<HTMLDialogElement>(null);
   const mobileLegendDialogRef = useRef<HTMLDialogElement>(null);
   const [layers, setLayers] = useState(LAYER_DEFAULTS);
@@ -372,10 +379,10 @@ export function WorkspaceMap({
     () =>
       stations.filter(
         (station) =>
-          (categoryFilter === "all" || categoryKey[station.category] === categoryFilter) &&
+          (categoryFilter === "all" || matchesCategoryFilter(station, categoryFilter, indexMode)) &&
           (districtFilter === "all" || station.district === districtFilter),
       ),
-    [categoryFilter, districtFilter, stations],
+    [categoryFilter, districtFilter, indexMode, stations],
   );
   const latestObservationIsStale = isStaleObservation(stationSummary?.latest_observed_at);
   const districts = useMemo(
@@ -545,8 +552,8 @@ export function WorkspaceMap({
   useEffect(() => {
     const map = mapRef.current;
     if (!mapReady || !map?.getLayer(STATION_HEATMAP_LAYER_ID)) return;
-    map.setLayoutProperty(STATION_HEATMAP_LAYER_ID, "visibility", heatmapVisible ? "visible" : "none");
-  }, [heatmapVisible, mapReady]);
+    map.setLayoutProperty(STATION_HEATMAP_LAYER_ID, "visibility", heatmapOn ? "visible" : "none");
+  }, [heatmapOn, mapReady]);
 
   const setMapLayerVisibility = useCallback((key: MapLayerKey, visible: boolean) => {
     const map = mapRef.current;
@@ -618,13 +625,7 @@ export function WorkspaceMap({
               setCategoryFilter(nextValue);
               trackNapasEvent("map_filter_changed", { filter: "air_quality", value: nextValue });
             }}
-            options={[
-              { label: copy.map.allLevels, value: "all" },
-              { label: copy.map.good, value: "good" },
-              { label: copy.map.moderate, value: "moderate" },
-              { label: copy.map.unhealthy, value: "unhealthy" },
-              { label: copy.map.stale, value: "stale" },
-            ]}
+            options={airQualityFilterOptions(indexMode, copy)}
             value={categoryFilter}
           />
           <MapFilterDropdown
@@ -679,24 +680,19 @@ export function WorkspaceMap({
         {layersOpen ? (
           <div className="layers-menu" id="layers-menu" role="dialog" aria-label={copy.map.mapLayers}>
             <div className="layer-heading">{copy.map.airQuality}</div>
-            <LayerToggle checked={heatmapVisible} label={copy.map.heatmap} onChange={() => {
+            <LayerToggle checked={heatmapVisible} disabled={indexMode === "aqi"} label={copy.map.heatmap} onChange={() => {
               setHeatmapVisible((visible) => !visible);
               trackNapasEvent("map_layer_toggled", { layer: "heatmap" });
             }} />
-            {heatmapVisible ? <p className="layer-note">{copy.map.heatmapDerived}</p> : null}
+            {indexMode === "aqi" ? <p className="layer-note">{copy.map.heatmapNeedsIspu}</p> : null}
+            {heatmapOn ? <p className="layer-note">{copy.map.heatmapDerived}</p> : null}
             <div className="layer-heading">{copy.map.indexLabel}</div>
             <label className="layer-toggle">
-              <input checked={indexMode === "aqi"} name="index-mode" onChange={() => {
-                setIndexMode("aqi");
-                trackNapasEvent("map_index_changed", { index: "aqi" });
-              }} type="radio" />
+              <input checked={indexMode === "aqi"} name="index-mode" onChange={() => changeIndexMode("aqi")} type="radio" />
               {copy.map.indexAqi}
             </label>
             <label className="layer-toggle">
-              <input checked={indexMode === "ispu"} name="index-mode" onChange={() => {
-                setIndexMode("ispu");
-                trackNapasEvent("map_index_changed", { index: "ispu" });
-              }} type="radio" />
+              <input checked={indexMode === "ispu"} name="index-mode" onChange={() => changeIndexMode("ispu")} type="radio" />
               {copy.map.indexIspu}
             </label>
             {indexMode === "aqi" ? <p className="layer-note">{copy.map.aqiDerivedNote}</p> : null}
@@ -906,7 +902,7 @@ function LegendContent({ indexMode, language }: { readonly indexMode: IndexMode;
               swatch={band.color}
             />
           ))}
-          <LegendItem color="stale" label={copy.map.staleMissing} />
+          <LegendItem color="stale" label={copy.map.noAqiFilter} />
         </div>
       ) : (
         <div className="legend-grid">
@@ -946,6 +942,34 @@ function LegendItem({
   );
 }
 
-function LayerToggle({ checked, label, onChange }: { readonly checked: boolean; readonly label: string; readonly onChange: () => void }) {
-  return <label className="layer-toggle"><input checked={checked} onChange={onChange} type="checkbox" />{label}</label>;
+function LayerToggle({
+  checked,
+  disabled = false,
+  label,
+  onChange,
+}: {
+  readonly checked: boolean;
+  readonly disabled?: boolean;
+  readonly label: string;
+  readonly onChange: () => void;
+}) {
+  return <label className="layer-toggle"><input checked={checked} disabled={disabled} onChange={onChange} type="checkbox" />{label}</label>;
+}
+
+function airQualityFilterOptions(indexMode: IndexMode, copy: ReturnType<typeof getUiCopy>): MapFilterOption[] {
+  const all = { label: copy.map.allLevels, value: "all" };
+  if (indexMode === "aqi") {
+    return [
+      all,
+      ...AQI_BANDS.map((band) => ({ label: copy.map[AQI_LABEL_KEY[band.key]], value: band.key })),
+      { label: copy.map.noAqiFilter, value: "stale" },
+    ];
+  }
+  return [
+    all,
+    { label: copy.map.good, value: "good" },
+    { label: copy.map.moderate, value: "moderate" },
+    { label: copy.map.unhealthy, value: "unhealthy" },
+    { label: copy.map.stale, value: "stale" },
+  ];
 }
