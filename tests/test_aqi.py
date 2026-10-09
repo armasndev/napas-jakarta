@@ -1,6 +1,6 @@
 import pytest
 
-from app.aqi import pm25_24h_mean, pm25_aqi, pm25_category
+from app.aqi import pm25_24h_mean, pm25_aqi, pm25_category, station_pm25_aqi
 
 
 @pytest.mark.parametrize(
@@ -54,3 +54,48 @@ def test_24h_mean_requires_18_valid_hours():
 def test_24h_mean_ignores_negative_and_non_finite_values():
     values = [10.0] * 18 + [-1.0, float("nan")]
     assert pm25_24h_mean(values) == 10.0
+
+
+def _hourly(station_id, start, values, pollutant="PM2.5"):
+    from datetime import timedelta
+
+    from app.models import Measurement
+
+    return [
+        Measurement(
+            station_id=station_id, station_name=station_id, district="Test",
+            observed_at=start + timedelta(hours=i), pollutant=pollutant,
+            concentration=value, concentration_unit="ug/m3", ispu_value=0,
+            ispu_category="Good", source="test",
+        )
+        for i, value in enumerate(values)
+    ]
+
+
+def test_station_aqi_uses_trailing_24h_mean():
+    from datetime import UTC, datetime
+
+    now = datetime(2026, 10, 9, 12, 0, tzinfo=UTC)
+    start = datetime(2026, 10, 8, 13, 0, tzinfo=UTC)
+    rows = _hourly("s1", start, [10.0] * 23)
+    result = station_pm25_aqi(rows, now)
+    assert result["s1"]["aqi"] == 53  # 10.0 µg/m³ is Moderate
+    assert result["s1"]["category"] == "Moderate"
+    assert result["s1"]["hours"] == 23
+
+
+def test_station_aqi_needs_18_hours_and_fresh_data():
+    from datetime import UTC, datetime
+
+    now = datetime(2026, 10, 9, 12, 0, tzinfo=UTC)
+    too_few = _hourly("s1", datetime(2026, 10, 9, 0, 0, tzinfo=UTC), [10.0] * 12)
+    old = _hourly("s2", datetime(2026, 10, 7, 0, 0, tzinfo=UTC), [10.0] * 24)
+    assert station_pm25_aqi(too_few + old, now) == {}
+
+
+def test_station_aqi_ignores_other_pollutants():
+    from datetime import UTC, datetime
+
+    now = datetime(2026, 10, 9, 12, 0, tzinfo=UTC)
+    rows = _hourly("s1", datetime(2026, 10, 8, 13, 0, tzinfo=UTC), [90.0] * 23, pollutant="O3")
+    assert station_pm25_aqi(rows, now) == {}

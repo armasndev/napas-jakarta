@@ -231,6 +231,11 @@ def test_station_catalog_preserves_coordinates_and_missing_observations():
             "source": "https://udara.jakarta.go.id/",
             "source_url": "https://udara.jakarta.go.id/",
             "freshness": {"status": "stale"},
+            "aqi": None,
+            "aqi_category": None,
+            "aqi_pm25_24h_mean": None,
+            "aqi_hours": None,
+            "aqi_window_end": None,
         },
         {
             "id": "s2",
@@ -245,6 +250,11 @@ def test_station_catalog_preserves_coordinates_and_missing_observations():
             "source": "https://udara.jakarta.go.id/",
             "source_url": "https://udara.jakarta.go.id/",
             "freshness": None,
+            "aqi": None,
+            "aqi_category": None,
+            "aqi_pm25_24h_mean": None,
+            "aqi_hours": None,
+            "aqi_window_end": None,
         },
     ]
 

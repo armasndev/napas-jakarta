@@ -12,6 +12,12 @@ document, so the caller must abstain rather than extrapolate.
 from __future__ import annotations
 
 import math
+from collections import defaultdict
+from collections.abc import Iterable
+from datetime import datetime, timedelta
+from typing import Any
+
+from app.models import Measurement
 
 # (concentration low, concentration high, AQI low, AQI high), 24-hour PM2.5.
 PM25_BREAKPOINTS: tuple[tuple[float, float, int, int], ...] = (
@@ -61,3 +67,38 @@ def pm25_24h_mean(hourly_values: list[float | None]) -> float | None:
     if len(valid) < MIN_HOURLY_VALUES:
         return None
     return sum(valid) / len(valid)
+
+
+def station_pm25_aqi(
+    measurements: Iterable[Measurement], now: datetime
+) -> dict[str, dict[str, Any]]:
+    """PM2.5 AQI per station from the trailing 24 hours of hourly readings.
+
+    A station is omitted when it has fewer than 18 hourly values in the window,
+    or when its readings are older than the window. Stale stations therefore
+    never get an AQI, matching the 24-hour freshness rule.
+    """
+    window_start = now - timedelta(hours=24)
+    hourly: dict[str, dict[datetime, float]] = defaultdict(dict)
+    for measurement in measurements:
+        if measurement.pollutant != "PM2.5" or measurement.concentration is None:
+            continue
+        hour = measurement.observed_at.replace(minute=0, second=0, microsecond=0)
+        if hour <= window_start or hour > now:
+            continue
+        hourly[measurement.station_id][hour] = measurement.concentration
+
+    results: dict[str, dict[str, Any]] = {}
+    for station_id, by_hour in hourly.items():
+        mean = pm25_24h_mean(list(by_hour.values()))
+        aqi = pm25_aqi(mean)
+        if mean is None or aqi is None:
+            continue
+        results[station_id] = {
+            "aqi": aqi,
+            "category": pm25_category(aqi),
+            "pm25_24h_mean": round(mean, 1),
+            "hours": len(by_hour),
+            "window_end": max(by_hour).isoformat(),
+        }
+    return results
