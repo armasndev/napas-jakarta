@@ -661,7 +661,6 @@ export function WorkspaceMap({
             <span>{copy.map.stationList}</span>
           </button>
         </div>
-        {indexMode === "aqi" ? <p className="index-note">{copy.map.aqiDerivedNote}</p> : null}
       </header>
 
       <div className="map-stage" id="map-stage">
@@ -960,13 +959,13 @@ function IndexSegmentedControl({
       <fieldset className="index-segment" data-index={value}>
         <legend className="visually-hidden">{label}</legend>
         <span aria-hidden="true" className="index-segment-thumb" />
-        <label className="index-segment-option" title={aqiLabel}>
-          <input checked={value === "aqi"} name="index-mode" onChange={() => onChange("aqi")} type="radio" />
-          <span>AQI</span>
-        </label>
         <label className="index-segment-option" title={ispuLabel}>
           <input checked={value === "ispu"} name="index-mode" onChange={() => onChange("ispu")} type="radio" />
           <span>ISPU</span>
+        </label>
+        <label className="index-segment-option" title={aqiLabel}>
+          <input checked={value === "aqi"} name="index-mode" onChange={() => onChange("aqi")} type="radio" />
+          <span>AQI</span>
         </label>
       </fieldset>
     </div>

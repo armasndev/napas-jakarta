@@ -41,7 +41,7 @@ test("AQI copy is translated, not copied from English", () => {
   const en = getUiCopy("en").map as Record<string, string>;
   const id = getUiCopy("id").map as Record<string, string>;
   for (const key of [
-    "indexAqi", "aqiDerivedNote", "aqiUnavailable", "aqiDefinition", "aqiBandUsg",
+    "indexAqi", "aqiDefinition", "aqiUnavailable", "aqiBandUsg",
     "aqiBandVeryUnhealthy", "noAqiFilter", "heatmapNeedsIspu", "unhealthyAqiLabel",
     "unhealthyDetailAqi", "detailObservedAt",
   ]) {
