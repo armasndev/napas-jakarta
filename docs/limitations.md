@@ -49,3 +49,10 @@ enter sensitive personal or health information.
 - The air-quality filter still uses ISPU categories.
 - AQI is not a current-conditions forecast or a NowCast. It is the trailing
   24-hour mean.
+- The derived AQI has not yet been validated against the official ISPU. A
+  snapshot of the portal shows ISPU is not a simple function of the raw PM2.5
+  value it reports, so the two may use different averaging. Compare them per
+  station once 24 hours of hourly history exists before treating them as
+  consistent.
+- Consumer apps often show a current AQI based on NowCast, not a 24-hour mean.
+  Napas AQI can therefore differ from those apps for the same station and hour.
