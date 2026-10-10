@@ -247,6 +247,7 @@ function toMapStation(row: StationCatalogResponse["stations"][number], language:
     aqiCategory: row.aqi_category,
     aqiHours: row.aqi_hours,
     pm25Mean24h: row.aqi_pm25_24h_mean,
+    stale: row.freshness?.stale === true,
     latitude: row.latitude,
     longitude: row.longitude,
     name: row.name,
@@ -740,37 +741,63 @@ export function WorkspaceMap({
           <article className="station-detail" aria-live="polite">
             <div className="station-detail-top">
               <div>
+                <p className="station-detail-eyebrow">{copy.map.selectedMonitor}</p>
                 <h3>{selectedStation.name}</h3>
                 <p className="station-district">{localizedDistrict(selectedStation.district, language)}</p>
               </div>
-              <button aria-label={copy.map.clearSelectedMonitor} className="station-detail-clear" onClick={() => onStationClear("map_detail")} type="button">
-                <XIcon aria-hidden="true" />
-              </button>
+              <div className="station-detail-actions">
+                {indexMode === "aqi" ? (
+                  <span
+                    className="category-pill"
+                    style={aqiBand(selectedStation.aqi ?? null) ? {
+                      background: aqiBand(selectedStation.aqi ?? null)?.color,
+                      color: aqiBand(selectedStation.aqi ?? null)?.textColor,
+                    } : undefined}
+                  >
+                    {aqiBandLabel(selectedStation.aqi ?? null, copy) ?? copy.map.noAqiFilter}
+                  </span>
+                ) : (
+                  <span className={cn("category-pill", categoryKey[selectedStation.category])}>
+                    {localizedCategory(selectedStation.category, language)}
+                  </span>
+                )}
+                <button aria-label={copy.map.clearSelectedMonitor} className="station-detail-clear" onClick={() => onStationClear("map_detail")} type="button">
+                  <XIcon aria-hidden="true" />
+                </button>
+              </div>
             </div>
-            <dl className="station-readings">
-              <div>
-                <dt>{copy.map.detailAqi}</dt>
-                <dd>{selectedStation.aqi === null || selectedStation.aqi === undefined
-                  ? copy.map.aqiUnavailable
-                  : [String(selectedStation.aqi), aqiBandLabel(selectedStation.aqi, copy)].filter(Boolean).join(" · ")}</dd>
+            <p className="station-detail-note">{copy.map.latestLocalReading}</p>
+            <div className="detail-metrics">
+              {(indexMode === "aqi" ? ["aqi", "ispu"] : ["ispu", "aqi"]).map((metric) => metric === "aqi" ? (
+                <div className={cn("detail-metric", indexMode === "aqi" && "is-active")} key="aqi">
+                  <span>{copy.map.detailAqi}</span>
+                  <strong>{selectedStation.aqi ?? "—"}</strong>
+                  <small>{aqiBandLabel(selectedStation.aqi ?? null, copy) ?? copy.map.aqiUnavailableShort}</small>
+                </div>
+              ) : (
+                <div className={cn("detail-metric", indexMode === "ispu" && "is-active")} key="ispu">
+                  <span>{copy.map.detailIspu}</span>
+                  <strong>{selectedStation.ispu ?? "—"}</strong>
+                  <small>{localizedCategory(selectedStation.category, language)}</small>
+                </div>
+              ))}
+              <div className="detail-metric">
+                <span>{copy.map.detailPm25}</span>
+                <strong>{selectedStation.pm25 ?? "—"} <small>{selectedStation.pm25 === null ? "" : "µg/m³"}</small></strong>
               </div>
-              <div>
-                <dt>{copy.map.detailIspu}</dt>
-                <dd>{[selectedStation.ispu ?? "—", selectedStation.category].join(" · ")}</dd>
-              </div>
-              <div>
-                <dt>{copy.map.detailPm25}</dt>
-                <dd>{selectedStation.pm25 === null ? "—" : `${selectedStation.pm25} µg/m³`}</dd>
-              </div>
-              <div>
-                <dt>{copy.map.detailObservedAt}</dt>
-                <dd>{selectedStation.observedAt}</dd>
-              </div>
-              <div>
-                <dt>{copy.map.detailSource}</dt>
-                <dd>{selectedStation.source}</dd>
-              </div>
-            </dl>
+            </div>
+            <div className="detail-meta">
+              <span>{copy.map.observed} <strong>{selectedStation.observedAt}</strong></span>
+              <span className={cn("freshness-badge", selectedStation.stale ? "is-stale" : "is-fresh")}>
+                {selectedStation.stale ? copy.map.freshnessStale : copy.map.freshnessFresh}
+              </span>
+              <span>
+                {copy.map.source}{" "}
+                {selectedStation.sourceUrl ? (
+                  <a href={selectedStation.sourceUrl} rel="noopener noreferrer" target="_blank"><strong>{selectedStation.source}</strong></a>
+                ) : <strong>{selectedStation.source}</strong>}
+              </span>
+            </div>
           </article>
         ) : (
           <article className="station-detail station-detail-empty" aria-live="polite">
@@ -890,7 +917,7 @@ function LegendContent({ indexMode, language }: { readonly indexMode: IndexMode;
     <>
       <h3>{indexMode === "aqi" ? copy.map.legendTitleAqi : copy.map.legendTitle}</h3>
       {indexMode === "aqi" ? (
-        <div className="legend-grid">
+        <div className="legend-grid legend-grid-aqi">
           {AQI_BANDS.map((band) => (
             <LegendItem
               color=""

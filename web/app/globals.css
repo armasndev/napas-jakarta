@@ -340,7 +340,7 @@ textarea {
 .station-list-button { display: inline-flex; min-height: 37px; margin-top: 13px; align-items: center; justify-content: center; gap: 6px; padding: 0 10px; border: 1px solid var(--od-border); border-radius: 7px; background: var(--od-surface); color: var(--od-fg); font-size: 12px; font-weight: 700; }
 .station-list-button svg { width: 15px; height: 15px; flex: 0 0 auto; }
 .station-list-button:hover { background: var(--od-bg); }
-.map-stage { position: relative; flex: 1; min-height: 390px; overflow: hidden; background: #dbe7dc; }
+.map-stage { position: relative; flex: 1; min-height: 260px; overflow: hidden; background: #dbe7dc; }
 .napas-real-map { position: absolute; inset: 0; }
 .maplibregl-map { width: 100%; height: 100%; }
 .maplibregl-ctrl-attrib { margin: 0 7px 7px 0 !important; border-radius: 4px; background: rgb(255 255 255 / .82) !important; }
@@ -367,12 +367,14 @@ textarea {
 .map-empty p { color: var(--od-muted); font-size: 12px; line-height: 1.45; }
 .map-empty button { padding: 8px 12px; border: 1px solid var(--od-fg); border-radius: 7px; background: var(--od-fg); color: var(--od-surface); font-size: 12px; font-weight: 700; }
 .map-empty.map-status button { margin-top: 4px; }
-.map-dock { display: grid; grid-template-columns: minmax(250px, 1.15fr) minmax(270px, .85fr); flex: none; min-height: 185px; border-top: 1px solid var(--od-border); background: var(--od-surface); }
+.map-dock { display: grid; grid-template-columns: minmax(250px, 1.15fr) minmax(270px, .85fr); flex: none; height: 300px; min-height: 185px; max-height: 320px; overflow-y: auto; border-top: 1px solid var(--od-border); background: var(--od-surface); }
 .legend { padding: 19px 22px; border-right: 1px solid var(--od-border); }
 .legend h3 { margin: 0 0 10px; font-size: 11px; letter-spacing: .075em; text-transform: uppercase; }
 .legend-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 9px 11px; }
 .legend-item { display: flex; align-items: center; gap: 7px; color: var(--od-fg); font-size: 11px; }
-.legend-item span { white-space: nowrap; }
+.legend-item span { white-space: normal; }
+.legend-item small { white-space: nowrap; }
+.legend-grid.legend-grid-aqi { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 .legend-item small { color: var(--od-muted); font-size: 10px; }
 .legend-dot { flex: none; width: 10px; height: 10px; border-radius: 50%; }
 .legend-dot.good { background: var(--od-good); }
@@ -415,6 +417,12 @@ textarea {
 .detail-metric span { display: block; color: var(--od-muted); font-size: 11px; letter-spacing: .06em; text-transform: uppercase; }
 .detail-metric strong { display: block; margin-top: 3px; font-family: "Cantarell", sans-serif; font-size: 26px; letter-spacing: -.025em; line-height: 1.12; }
 .detail-metric strong small { color: var(--od-muted); font-family: inherit; font-size: 11px; font-weight: 600; letter-spacing: 0; }
+.detail-metric > small { display: block; margin-top: 2px; color: var(--od-muted); font-size: 11px; font-weight: 600; }
+.detail-metric.is-active span { color: var(--od-accent-dark); }
+.detail-metric.is-active strong { color: var(--od-fg); }
+.freshness-badge { padding: 2px 8px; border-radius: 999px; font-weight: 700; }
+.freshness-badge.is-fresh { background: var(--od-good-soft); color: oklch(0.32 0.09 170); }
+.freshness-badge.is-stale { background: var(--od-stale-soft); color: var(--od-fg); }
 .ask-station { display: inline-flex; min-height: 36px; align-items: center; justify-content: center; gap: 7px; padding: 0 12px; border: 1px solid var(--od-action); border-radius: var(--od-control-radius); background: var(--od-action); color: var(--od-surface); box-shadow: var(--od-elevation-control); font-size: 11px; font-weight: 800; white-space: nowrap; }
 .ask-station svg { width: 15px; height: 15px; flex: 0 0 auto; }
 .ask-station:hover { border-color: var(--od-fg); background: var(--od-fg); box-shadow: var(--od-elevation-card); transform: translateY(-1px); }
@@ -1967,9 +1975,9 @@ textarea {
 
   .map-dock {
     grid-template-columns: minmax(0, 3fr) minmax(190px, 1fr);
-    height: 138px;
-    min-height: 138px;
-    max-height: 138px;
+    height: 300px;
+    min-height: 300px;
+    max-height: 320px;
   }
 
   .legend,
@@ -2339,28 +2347,6 @@ textarea {
   }
 }
 
-.station-readings {
-  display: grid;
-  gap: 6px;
-  margin: 12px 0 0;
-  font-size: 13px;
-}
-
-.station-readings div {
-  display: flex;
-  justify-content: space-between;
-  gap: 12px;
-}
-
-.station-readings dt {
-  color: #4b6470;
-}
-
-.station-readings dd {
-  margin: 0;
-  font-weight: 600;
-  text-align: right;
-}
 
 .layer-toggle:has(input:disabled) {
   opacity: 0.5;
