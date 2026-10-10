@@ -741,9 +741,8 @@ export function WorkspaceMap({
           <article className="station-detail" aria-live="polite">
             <div className="station-detail-top">
               <div>
-                <p className="station-detail-eyebrow">{copy.map.selectedMonitor}</p>
+                <p className="station-detail-eyebrow">{copy.map.selectedMonitor} · {localizedDistrict(selectedStation.district, language)}</p>
                 <h3>{selectedStation.name}</h3>
-                <p className="station-district">{localizedDistrict(selectedStation.district, language)}</p>
               </div>
               <div className="station-detail-actions">
                 {indexMode === "aqi" ? (

@@ -2480,3 +2480,126 @@ textarea {
   .map-dock .legend-term dt { font-size: 9px; letter-spacing: .04em; line-height: 1.1; }
   .map-dock .legend-term dd { margin: 2px 0 0; font-size: 9px; line-height: 1.25; }
 }
+
+/* Station detail card: uses the same tokens as the KPI cards and index toggle. */
+.map-dock .station-detail:not(.station-detail-empty) {
+  gap: 3px;
+  padding: 6px 14px;
+  background: var(--od-surface);
+  overflow-y: auto;
+}
+
+.map-dock .station-detail h3 {
+  overflow: hidden;
+  font-size: 14px;
+  letter-spacing: -.02em;
+  line-height: 1.2;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.map-dock .station-detail .station-detail-top > div:first-child {
+  min-width: 0;
+}
+
+.map-dock .station-detail .station-detail-eyebrow {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.map-dock .station-detail-note {
+  margin: 0;
+  font-size: 11px;
+  line-height: 1.3;
+}
+
+.map-dock .detail-metrics {
+  align-self: stretch;
+  width: 100%;
+  gap: 6px;
+}
+
+.map-dock .detail-metric {
+  min-width: 0;
+  flex: 1 1 0;
+  padding: 3px 8px;
+  border: 1px solid var(--od-border);
+  border-top: 2px solid var(--od-border);
+  border-radius: 9px;
+  background: var(--od-bg);
+}
+
+.map-dock .detail-metric.is-active {
+  border-top-color: var(--od-action);
+}
+
+.map-dock .detail-metric span {
+  color: var(--od-fg);
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: .045em;
+  line-height: 1.05;
+  text-transform: uppercase;
+}
+
+.map-dock .detail-metric.is-active span {
+  color: var(--od-fg);
+}
+
+.map-dock .detail-metric strong {
+  margin-top: 2px;
+  color: var(--od-fg);
+  font-size: 18px;
+  letter-spacing: -.035em;
+  line-height: .95;
+}
+
+.map-dock .detail-metric strong small {
+  font-size: 10px;
+}
+
+.map-dock .detail-metric > small {
+  margin-top: 3px;
+  font-size: 10px;
+  font-weight: 700;
+}
+
+.map-dock .category-pill {
+  padding: 4px 9px;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: .045em;
+  text-transform: uppercase;
+}
+
+.map-dock .freshness-badge {
+  padding: 1px 7px;
+  line-height: 1.3;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: .045em;
+  text-transform: uppercase;
+}
+
+.map-dock .station-detail:not(.station-detail-empty) .detail-meta {
+  margin-top: 0;
+  padding-top: 4px;
+}
+
+.map-dock .detail-meta {
+  align-items: center;
+  gap: 2px 10px;
+  font-size: 10px;
+}
+
+.map-dock .detail-meta strong {
+  font-size: 10px;
+}
+
+/* Station card gets the wider share of the dock; the legend keeps its compact grid. Card scrolls internally if it still exceeds the dock (checked at 1280x820). */
+@media (min-width: 981px) {
+  .map-dock {
+    grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr);
+  }
+}
