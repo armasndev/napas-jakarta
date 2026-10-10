@@ -340,7 +340,7 @@ textarea {
 .station-list-button { display: inline-flex; min-height: 37px; margin-top: 13px; align-items: center; justify-content: center; gap: 6px; padding: 0 10px; border: 1px solid var(--od-border); border-radius: 7px; background: var(--od-surface); color: var(--od-fg); font-size: 12px; font-weight: 700; }
 .station-list-button svg { width: 15px; height: 15px; flex: 0 0 auto; }
 .station-list-button:hover { background: var(--od-bg); }
-.map-stage { position: relative; flex: 1; min-height: 260px; overflow: hidden; background: #dbe7dc; }
+.map-stage { position: relative; flex: 1; min-height: 390px; overflow: hidden; background: #dbe7dc; }
 .napas-real-map { position: absolute; inset: 0; }
 .maplibregl-map { width: 100%; height: 100%; }
 .maplibregl-ctrl-attrib { margin: 0 7px 7px 0 !important; border-radius: 4px; background: rgb(255 255 255 / .82) !important; }
@@ -367,7 +367,7 @@ textarea {
 .map-empty p { color: var(--od-muted); font-size: 12px; line-height: 1.45; }
 .map-empty button { padding: 8px 12px; border: 1px solid var(--od-fg); border-radius: 7px; background: var(--od-fg); color: var(--od-surface); font-size: 12px; font-weight: 700; }
 .map-empty.map-status button { margin-top: 4px; }
-.map-dock { display: grid; grid-template-columns: minmax(250px, 1.15fr) minmax(270px, .85fr); flex: none; height: 300px; min-height: 185px; max-height: 320px; overflow-y: auto; border-top: 1px solid var(--od-border); background: var(--od-surface); }
+.map-dock { display: grid; grid-template-columns: minmax(250px, 1.15fr) minmax(270px, .85fr); flex: none; min-height: 185px; border-top: 1px solid var(--od-border); background: var(--od-surface); }
 .legend { padding: 19px 22px; border-right: 1px solid var(--od-border); }
 .legend h3 { margin: 0 0 10px; font-size: 11px; letter-spacing: .075em; text-transform: uppercase; }
 .legend-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 9px 11px; }
@@ -1975,9 +1975,9 @@ textarea {
 
   .map-dock {
     grid-template-columns: minmax(0, 3fr) minmax(190px, 1fr);
-    height: 300px;
-    min-height: 300px;
-    max-height: 320px;
+    height: 138px;
+    min-height: 138px;
+    max-height: 138px;
   }
 
   .legend,
