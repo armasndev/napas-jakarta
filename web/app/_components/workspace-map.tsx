@@ -765,7 +765,6 @@ export function WorkspaceMap({
                 </button>
               </div>
             </div>
-            <p className="station-detail-note">{copy.map.latestLocalReading}</p>
             <div className="detail-metrics">
               {indexMode === "aqi" ? (
                 <div className="detail-metric is-active">
