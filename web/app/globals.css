@@ -2479,6 +2479,23 @@ textarea {
   .map-dock .legend-term { padding: 4px 7px; border-radius: 6px; }
   .map-dock .legend-term dt { font-size: 9px; letter-spacing: .04em; line-height: 1.1; }
   .map-dock .legend-term dd { margin: 2px 0 0; font-size: 9px; line-height: 1.25; }
+
+/* Wide screens have spare room in the dock, so the legend scales up. */
+@media (min-width: 1600px) {
+  .map-dock .legend {
+    padding: 10px 22px 8px;
+  }
+  .map-dock .legend h3 { font-size: 11px; margin-bottom: 6px; }
+  .map-dock .legend-grid { gap: 5px 26px; }
+  .map-dock .legend-item { font-size: 12px; gap: 7px; }
+  .map-dock .legend-item small { font-size: 11px; }
+  .map-dock .legend-key { gap: 14px; }
+  .map-dock .legend-key span { font-size: 11px; }
+  .map-dock .legend-terms { gap: 10px; padding-top: 6px; }
+  .map-dock .legend-term { padding: 5px 10px; }
+  .map-dock .legend-term dt { font-size: 10px; }
+  .map-dock .legend-term dd { font-size: 10.5px; line-height: 1.25; margin-top: 2px; }
+}
 }
 
 /* Station detail card: uses the same tokens as the KPI cards and index toggle. */
