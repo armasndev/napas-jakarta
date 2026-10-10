@@ -17,6 +17,8 @@ export type DemoStation = {
   aqiCategory?: string | null;
   aqiHours?: number | null;
   pm25Mean24h?: number | null;
+  // True when the latest reading is older than the freshness window.
+  stale?: boolean;
 };
 
 export type StationCatalogRow = {
