@@ -18,5 +18,8 @@ export const EN_PRIVACY_PATH = "/privacy";
 export const ID_PRIVACY_PATH = "/id/privasi";
 
 export function absoluteUrl(path: string): string {
-  return new URL(path, `${SITE_URL}/`).toString();
+  const url = new URL(path, `${SITE_URL}/`).toString();
+  // The homepage canonical is emitted without a trailing slash; keep the sitemap and
+  // structured data on the same form so every signal names one URL per page.
+  return path === "/" ? url.replace(/\/$/, "") : url;
 }
