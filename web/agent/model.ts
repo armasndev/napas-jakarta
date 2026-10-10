@@ -1,5 +1,6 @@
 import { createGoogleGenerativeAI } from "@ai-sdk/google";
 import { emitServerException, emitServerLog } from "../lib/server-logger.ts";
+import { guardedModel } from "./guard.ts";
 
 export const DEFAULT_GEMINI_MODEL = "gemini-3.5-flash-lite";
 export const DEFAULT_GEMINI_REQUEST_TIMEOUT_MS = 120_000;
@@ -74,7 +75,7 @@ export function createNapasModel() {
     },
   });
 
-  return google(selectGeminiModel(process.env.GEMINI_MODEL));
+  return guardedModel(google(selectGeminiModel(process.env.GEMINI_MODEL)));
 }
 
 function observeGeminiResponse(response: Response, providerRequestId: string, startedAt: number): Response {

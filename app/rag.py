@@ -16,10 +16,9 @@ from .data import (
     load_measurements,
     summarize_district,
 )
-from .guard import guarded_generate
 from .models import Document, Measurement, SearchResult
 from .policy import get_policy_timeline
-from .provider import complete_guard, generate_answer, generation_usage, provider_configured
+from .provider import generate_answer, generation_usage
 from .retrieval import search
 from .router import classify
 from .tools import (
@@ -767,7 +766,6 @@ def answer(
         for item in sources
     )
     structured_answer = bool(measurement_context) or category_result is not None
-    guard_info: dict = {"status": "not_applicable"}
     provider_delta = _provider_delta_for_answer(
         on_delta,
         measurement_context=measurement_context,
@@ -794,20 +792,12 @@ def answer(
             "and related guidance."
         )
     elif route == "most_recent_category" and category_result is not None:
-        generated, guard_info = guarded_generate(
-            question,
-            language,
-            generate=lambda cb: generate_answer(question, context, language, history=history, on_delta=cb),
-            complete=complete_guard,
-            configured=provider_configured(),
-            on_delta=provider_delta,
+        generated = generate_answer(
+            question, context, language, history=history, on_delta=provider_delta
         )
-        if guard_info["status"] == "blocked":
-            answer_text = generated
-        else:
-            answer_text = generated or _category_occurrence_response(category_result, language)
-            if generated and not _tool_answer_preserves_facts(generated, category_result):
-                answer_text = _category_occurrence_response(category_result, language)
+        answer_text = generated or _category_occurrence_response(category_result, language)
+        if generated and not _tool_answer_preserves_facts(generated, category_result):
+            answer_text = _category_occurrence_response(category_result, language)
     elif route == "most_recent_category":
         answer_text = (
             "Sebutkan kabupaten/kota atau distrik Jakarta yang ingin diperiksa; "
@@ -816,15 +806,9 @@ def answer(
             else "Please name the Jakarta district to check; a Good occurrence must be found from station observations at a specific location."
         )
     else:
-        generated, guard_info = guarded_generate(
-            question,
-            language,
-            generate=lambda cb: generate_answer(question, context, language, history=history, on_delta=cb),
-            complete=complete_guard,
-            configured=provider_configured(),
-            on_delta=provider_delta,
-        )
-        answer_text = generated or demo_response(question, context, language, route)
+        answer_text = generate_answer(
+            question, context, language, history=history, on_delta=provider_delta
+        ) or demo_response(question, context, language, route)
     # Structured measurement/tool renderers retain the legacy compact token
     # for client compatibility; their adjacent ``citations`` objects still
     # carry the exact chunk locator.  Document answers are upgraded to the
@@ -859,7 +843,6 @@ def answer(
         "rewritten_query": query,
         "answer": answer_text,
         "generation_usage": generation_usage(),
-        "guard": guard_info,
         "sources": sources,
         "citations": citations,
         "citation_validation": citation_validation,
