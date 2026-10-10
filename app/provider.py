@@ -343,3 +343,62 @@ def _consume_anthropic_stream(response, model: str, on_delta: Callable[[str], No
     finally:
         _record_usage("anthropic", model, usage)
     return "".join(parts) or None
+
+
+def provider_configured() -> bool:
+    """True when the selected LLM provider has an API key, so a model answer is possible."""
+    provider = os.getenv("LLM_PROVIDER", "openai").strip().lower()
+    key_name = "ANTHROPIC_API_KEY" if provider == "anthropic" else "OPENAI_API_KEY"
+    return bool(os.getenv(key_name, "").strip())
+
+
+def complete_guard(system: str, user: str) -> str | None:
+    """One non-streaming call with its own system prompt, used by the guard.
+
+    Returns None on any provider failure so the guard can fail closed.
+    """
+    if not provider_configured():
+        return None
+    provider = os.getenv("LLM_PROVIDER", "openai").strip().lower()
+    try:
+        if provider == "anthropic":
+            import requests
+
+            response = requests.post(
+                os.getenv("ANTHROPIC_BASE_URL", "https://api.anthropic.com").rstrip("/")
+                + "/v1/messages",
+                headers={
+                    "x-api-key": os.getenv("ANTHROPIC_API_KEY", "").strip(),
+                    "anthropic-version": "2023-06-01",
+                    "content-type": "application/json",
+                },
+                json={
+                    "model": os.getenv("LLM_MODEL", "claude-haiku-4-5-20251001"),
+                    "max_tokens": 200,
+                    "temperature": 0,
+                    "system": system,
+                    "messages": [{"role": "user", "content": user}],
+                },
+                timeout=(10, 30),
+            )
+            response.raise_for_status()
+            blocks = response.json().get("content", [])
+            return "".join(b.get("text", "") for b in blocks if b.get("type") == "text") or None
+
+        from openai import OpenAI
+
+        client = OpenAI(
+            api_key=os.getenv("OPENAI_API_KEY", "").strip(),
+            base_url=os.getenv("OPENAI_BASE_URL", "").strip() or None,
+            timeout=30.0,
+            max_retries=2,
+        )
+        result = client.chat.completions.create(
+            model=os.getenv("LLM_MODEL", "gpt-4o-mini"),
+            temperature=0,
+            max_tokens=200,
+            messages=[{"role": "system", "content": system}, {"role": "user", "content": user}],
+        )
+        return result.choices[0].message.content or None
+    except Exception:  # noqa: BLE001 - provider errors vary; the guard fails closed
+        return None
