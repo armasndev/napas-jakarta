@@ -35,3 +35,24 @@ no account, cookie, IP, device, or contact fields. The public chat itself is
 cleared on refresh. Records are not public and are deleted by the scheduled
 retention job after `INTERACTION_RETENTION_DAYS` (30 days by default). Do not
 enter sensitive personal or health information.
+
+## Derived AQI
+
+- The map's default index is a derived US EPA PM2.5 AQI. The official Jakarta
+  index is ISPU, which stays visible on each station.
+- A station's AQI needs 18 hourly PM2.5 readings in the last 24 hours. The
+  ingestion job runs hourly, so AQI is unavailable for roughly a day after the
+  hourly schedule starts, and for any station with gaps in its feed.
+- AQI is shown only for 0 to 300 (up to 225.4 µg/m³ PM2.5). Higher values
+  abstain.
+- The heatmap still uses ISPU.
+- The air-quality filter still uses ISPU categories.
+- AQI is not a current-conditions forecast or a NowCast. It is the trailing
+  24-hour mean.
+- The derived AQI has not yet been validated against the official ISPU. A
+  snapshot of the portal shows ISPU is not a simple function of the raw PM2.5
+  value it reports, so the two may use different averaging. Compare them per
+  station once 24 hours of hourly history exists before treating them as
+  consistent.
+- Consumer apps often show a current AQI based on NowCast, not a 24-hour mean.
+  Napas AQI can therefore differ from those apps for the same station and hour.

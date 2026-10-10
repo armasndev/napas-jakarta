@@ -3,7 +3,7 @@ from __future__ import annotations
 import json
 import os
 import re
-from datetime import date
+from datetime import UTC, date, datetime
 from pathlib import Path
 from time import perf_counter
 from typing import Annotated, Any, Literal
@@ -16,6 +16,7 @@ from monitoring.analytics import load_dashboard
 from monitoring.logging import log_feedback, log_interaction
 from monitoring.structured import emit_exception, emit_log
 
+from .aqi import station_pm25_aqi
 from .config import build_metadata, selected_retrieval_mode
 from .evidence import compare_study_findings, get_source_apportionment
 from .policy import get_policy_status, get_policy_timeline
@@ -149,10 +150,14 @@ def _public_station_category(
 
 
 def build_station_catalog(
-    station_records: list[dict], latest_rows: list[dict], source_mode: str
+    station_records: list[dict],
+    latest_rows: list[dict],
+    source_mode: str,
+    aqi_by_station: dict[str, dict[str, Any]] | None = None,
 ) -> dict[str, Any]:
     """Join station coordinates with the latest observation for map consumers."""
     latest_by_id = {str(row["station_id"]): row for row in latest_rows}
+    aqi_by_id = aqi_by_station or {}
     stations: list[dict[str, Any]] = []
     for record in station_records:
         station_id = str(record["station_id"])
@@ -167,6 +172,7 @@ def build_station_catalog(
             ispu,
             (observation or {}).get("freshness"),
         )
+        station_aqi = aqi_by_id.get(station_id) or {}
         stations.append(
             {
                 "id": station_id,
@@ -181,6 +187,13 @@ def build_station_catalog(
                 "source": source,
                 "source_url": source_url,
                 "freshness": (observation or {}).get("freshness"),
+                # US EPA PM2.5 AQI, derived from the trailing 24-hour mean.
+                # Null when fewer than 18 hourly readings or the data is stale.
+                "aqi": station_aqi.get("aqi"),
+                "aqi_category": station_aqi.get("category"),
+                "aqi_pm25_24h_mean": station_aqi.get("pm25_24h_mean"),
+                "aqi_hours": station_aqi.get("hours"),
+                "aqi_window_end": station_aqi.get("window_end"),
             }
         )
 
@@ -202,6 +215,9 @@ def build_station_catalog(
             overall_category = "Moderate"
         else:
             overall_category = "Unhealthy"
+    # AQI counts use the same reporting stations. Moderate is AQI 51 to 100 and
+    # unhealthy is AQI 101 and above, which covers the EPA bands above Moderate.
+    reporting_aqi = [int(row["aqi"]) for row in reporting if row.get("aqi") is not None]
     return {
         "contract_version": 1,
         "stations": stations,
@@ -212,6 +228,8 @@ def build_station_catalog(
             "moderate_count": counts["Moderate"],
             "unhealthy_count": counts["Unhealthy"],
             "stale_count": counts["Stale / missing"],
+            "aqi_moderate_count": sum(51 <= value <= 100 for value in reporting_aqi),
+            "aqi_unhealthy_count": sum(value >= 101 for value in reporting_aqi),
             "latest_observed_at": newest,
             "overall_category": overall_category,
             "source_mode": source_mode,
@@ -461,6 +479,7 @@ def stations(pollutant: str = "PM2.5") -> dict[str, Any]:
         station_records,
         get_latest_measurements(MEASUREMENTS, pollutant=pollutant),
         _source_manifest()["mode"],
+        aqi_by_station=station_pm25_aqi(MEASUREMENTS, datetime.now(UTC)),
     )
 
 

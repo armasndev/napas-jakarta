@@ -30,7 +30,7 @@ export const ABOUT_CONTENT: Record<"en" | "id", AboutContent> = {
         heading: "Where does the data come from?",
         paragraphs: [
           "Station observations come from the official DKI Jakarta air-quality monitoring portal. Each reading keeps its station name, observation time and a link back to the source so you can verify it. Napas does not operate monitors or measure air quality itself.",
-          "The data is refreshed from the portal on a schedule, currently every two hours. The observation time on each reading, not the refresh time, tells you when the air was measured.",
+          "The data is refreshed from the portal on a schedule, currently every hour. The observation time on each reading, not the refresh time, tells you when the air was measured.",
         ],
       },
       {
@@ -80,7 +80,7 @@ export const ABOUT_CONTENT: Record<"en" | "id", AboutContent> = {
         heading: "Dari mana data berasal?",
         paragraphs: [
           "Pengamatan stasiun berasal dari portal pemantauan kualitas udara resmi DKI Jakarta. Setiap pembacaan menyimpan nama stasiun, waktu pengamatan, dan tautan ke sumbernya agar dapat Anda periksa sendiri. Napas tidak mengoperasikan monitor dan tidak mengukur kualitas udara sendiri.",
-          "Data diperbarui dari portal secara terjadwal, saat ini setiap dua jam. Waktu pengamatan pada setiap pembacaan, bukan waktu pembaruan, menunjukkan kapan udara diukur.",
+          "Data diperbarui dari portal secara terjadwal, saat ini setiap jam. Waktu pengamatan pada setiap pembacaan, bukan waktu pembaruan, menunjukkan kapan udara diukur.",
         ],
       },
       {

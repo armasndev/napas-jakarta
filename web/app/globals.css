@@ -324,7 +324,8 @@ textarea {
 .kpi-detail { min-width: 0; overflow: hidden; color: var(--od-muted); font-size: 9px; line-height: 1.1; text-overflow: ellipsis; white-space: nowrap; }
 .kpi-track { display: block; height: 4px; overflow: hidden; border-radius: 999px; background: color-mix(in oklch, var(--kpi-accent) 15%, var(--od-surface)); }
 .kpi-track span { display: block; height: 100%; min-width: 0; border-radius: inherit; background: var(--kpi-accent); }
-.filters { display: flex; grid-area: filters; align-items: end; justify-content: flex-end; flex-wrap: wrap; gap: 8px; }
+.filters { display: flex; grid-area: filters; align-items: end; justify-content: flex-end; flex-wrap: nowrap; gap: 8px; }
+.filters .station-list-button { margin-top: 0; }
 .filter-label { display: grid; gap: 3px; color: var(--od-muted); font-size: 10px; font-weight: 700; letter-spacing: .04em; }
 .filter-label select { min-width: 125px; height: 37px; padding: 0 28px 0 10px; border: 1px solid var(--od-border); border-radius: 7px; background: var(--od-surface); color: var(--od-fg); font-size: 12px; font-weight: 600; }
 .map-filter-dropdown { position: relative; min-width: 125px; }
@@ -470,7 +471,7 @@ textarea {
     gap: 10px;
   }
   .map-kpis { min-width: 0; }
-  .filters { justify-content: flex-start; }
+  .filters { justify-content: flex-start; flex-wrap: wrap; }
 }
 
 @container map-panel (max-width: 560px) {
@@ -581,7 +582,7 @@ textarea {
   .map-kpis { margin-top: 12px; }
   .map-kpi { min-width: 0; flex: 1; }
   .map-kpi small { display: none; }
-  .filters { justify-content: flex-start; margin-top: 12px; gap: 7px; }
+  .filters { justify-content: flex-start; flex-wrap: wrap; margin-top: 12px; gap: 7px; }
   .filter-label { min-width: 125px; flex: 1; }
   .filter-label select { width: 100%; min-width: 0; }
   .station-list-button { width: 100%; margin-top: 0; }
@@ -1238,7 +1239,6 @@ textarea {
   .map-head {
     grid-template-columns: minmax(0, 0.75fr) minmax(0, 1fr);
     grid-template-rows: auto auto;
-    grid-template-areas: "title filters" "kpis kpis";
     align-items: center;
     gap: 8px 12px;
     padding: 10px clamp(12px, 1.35vw, 20px);
@@ -1679,11 +1679,11 @@ textarea {
 
 @container map-panel (max-width: 760px) {
   .map-head {
-    grid-template-columns: minmax(0, 0.75fr) minmax(0, 1fr);
-    grid-template-areas: "title filters" "kpis kpis";
-    grid-template-rows: auto auto;
-    align-items: center;
-    gap: 6px 8px;
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-areas: "title" "kpis" "filters";
+    grid-template-rows: auto auto auto;
+    align-items: stretch;
+    gap: 8px;
     padding: 9px 12px;
   }
 
@@ -1928,19 +1928,22 @@ textarea {
   .map-head {
     grid-template-columns: minmax(150px, .62fr) minmax(300px, 1fr);
     grid-template-rows: auto auto;
-    grid-template-areas: "title filters" "kpis kpis";
     align-items: center;
     gap: 7px 12px;
     padding: 9px clamp(12px, 1.35vw, 20px);
   }
 
   .filters {
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr)) auto;
+    display: flex;
+    flex-wrap: nowrap;
     align-items: end;
     justify-self: end;
-    width: min(100%, 410px);
+    max-width: 100%;
     gap: 6px;
+  }
+
+  .filters > * {
+    flex: none;
   }
 
   .filter-label {
@@ -2333,5 +2336,133 @@ textarea {
   .napas-od-app .napas-topic-trigger {
     width: 100%;
     max-width: none;
+  }
+}
+
+.station-readings {
+  display: grid;
+  gap: 6px;
+  margin: 12px 0 0;
+  font-size: 13px;
+}
+
+.station-readings div {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.station-readings dt {
+  color: #4b6470;
+}
+
+.station-readings dd {
+  margin: 0;
+  font-weight: 600;
+  text-align: right;
+}
+
+.layer-toggle:has(input:disabled) {
+  opacity: 0.5;
+}
+
+/* Index toggle (AQI / ISPU) beside the air-quality level filter. */
+.index-segment {
+  position: relative;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  align-items: center;
+  height: 37px;
+  min-width: 118px;
+  margin: 0;
+  padding: 3px;
+  border: 1px solid var(--od-border);
+  border-radius: var(--od-control-radius);
+  background: var(--od-bg);
+}
+
+.index-segment-thumb {
+  position: absolute;
+  top: 3px;
+  bottom: 3px;
+  left: 3px;
+  width: calc(50% - 3px);
+  border-radius: 6px;
+  background: var(--od-surface);
+  box-shadow: 0 1px 2px oklch(0.24 0.04 246 / 0.14);
+  transition: transform 260ms cubic-bezier(0.2, 0.7, 0.2, 1);
+}
+
+.index-segment[data-index="ispu"] .index-segment-thumb {
+  transform: translateX(100%);
+}
+
+.index-segment-option {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  height: 100%;
+  place-items: center;
+  padding: 0 10px;
+  color: var(--od-muted);
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: color 200ms ease;
+}
+
+.index-segment-option:has(input:checked) {
+  color: var(--od-fg);
+}
+
+.index-segment-option:has(input:focus-visible) {
+  outline: 2px solid var(--od-action);
+  outline-offset: 2px;
+  border-radius: 6px;
+}
+
+.index-segment-option input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: 0;
+  opacity: 0;
+}
+
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .index-segment-thumb,
+  .index-segment-option {
+    transition: none;
+  }
+}
+
+/* Side-by-side header only when the map panel itself is wide enough for the filter row. */
+@container map-panel (min-width: 761px) {
+  .map-head {
+    grid-template-areas: "title filters" "kpis kpis";
+  }
+}
+
+/* Narrow map panels stack the filter row full width, and it may wrap there. */
+@container map-panel (max-width: 760px) {
+  .map-head {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-areas: "title" "kpis" "filters";
+  }
+
+  .filters {
+    justify-self: stretch;
+    width: 100%;
+    flex-wrap: wrap;
   }
 }

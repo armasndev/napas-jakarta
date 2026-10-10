@@ -68,6 +68,13 @@ export default function PanduanKualitasUdaraJakarta() {
         </p>
       </section>
 
+      <section aria-labelledby="aqi-vs-ispu" className={styles.section}>
+        <h2 id="aqi-vs-ispu">Apa beda AQI dengan ISPU?</h2>
+        <p>
+          AQI (Air Quality Index) adalah indeks Badan Perlindungan Lingkungan Amerika Serikat (US EPA). Napas Jakarta juga menampilkan AQI PM2.5, yang dihitung dari rata-rata 24 jam pembacaan PM2.5 suatu stasiun dengan metode EPA, karena skala ini banyak dikenal. Angka ini dihitung oleh Napas, bukan diterbitkan Pemerintah DKI Jakarta. Nilai resmi Jakarta adalah ISPU. Kedua indeks mengubah kadar polutan menjadi angka, tetapi skala dan batas kategorinya berbeda, jadi jangan membandingkannya secara langsung. Sebuah stasiun hanya menampilkan AQI jika memiliki sedikitnya 18 pembacaan per jam dalam 24 jam terakhir.
+        </p>
+      </section>
+
       <section aria-labelledby="cek-terkini" className={styles.section}>
         <h2 id="cek-terkini">Bagaimana cara memeriksa kualitas udara Jakarta terkini?</h2>
         <p>

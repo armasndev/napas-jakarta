@@ -6,16 +6,18 @@ import styles from "./guide-layout.module.css";
 
 export function GuideLayout({
   lang,
+  localizedPaths = { en: EN_GUIDE_PATH, id: ID_GUIDE_PATH },
   children,
 }: {
   readonly lang: "en" | "id";
+  readonly localizedPaths?: { readonly en: string; readonly id: string };
   readonly children: ReactNode;
 }) {
   const isEnglish = lang === "en";
 
   return (
     <main className={styles.page}>
-      <SiteHeader language={lang} localizedPaths={{ en: EN_GUIDE_PATH, id: ID_GUIDE_PATH }} />
+      <SiteHeader language={lang} localizedPaths={localizedPaths} />
       <article className={styles.article} lang={lang}>
         {children}
         <nav aria-label={isEnglish ? "Related pages" : "Halaman terkait"} className={styles.related}>

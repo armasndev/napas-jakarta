@@ -1,6 +1,6 @@
 # Napas Jakarta application state
 
-**Last verified:** 29 September 2026 (Asia/Jakarta)
+**Last verified:** 9 October 2026 (Asia/Jakarta)
 
 This is the concise operational checkpoint for Napas Jakarta. It records the
 broad product, data, deployment, security, and observability state so future
@@ -49,8 +49,8 @@ responsibilities:
 
 The web service is rooted at `/web`; the API and ingestion services are rooted
 at `/`. The web readiness check uses `/api/health` and includes Eve readiness.
-Ingestion runs `python -m ingestion.railway_cron` every two hours
-(`0 */2 * * *`). PostgreSQL remains a shared runtime store and is not tied to a
+Ingestion runs `python -m ingestion.railway_cron` every hour
+(`0 * * * *`), so each station accumulates hourly history for 24-hour means. PostgreSQL remains a shared runtime store and is not tied to a
 repository commit.
 
 Cloudflare manages the custom-domain DNS path. The web, API, and ingestion
@@ -60,6 +60,10 @@ status, and public health endpoint after each release.
 
 ## Data and freshness
 
+- The map defaults to a derived US EPA PM2.5 AQI from each station's trailing
+  24-hour mean (18 hourly readings required). ISPU, the official Jakarta index,
+  is one toggle away and stays on the station card. The derived AQI is labelled
+  as a Napas calculation, never as an official figure.
 - The primary live source is the official Jakarta air-quality monitoring
   network, with source and station provenance retained for attribution.
 - Ingestion writes the current catalog and observations to Railway PostgreSQL.
@@ -127,8 +131,8 @@ status, and public health endpoint after each release.
 
 - The web code defines canonical metadata, bilingual air-quality guides and
   About pages, `robots.txt`, and an XML sitemap. The sitemap lists the public
-  homepage, About pages, both guides, and bilingual Privacy pages with language
-  alternates. The homepage header links to the air-quality guide in the
+  homepage, the Indonesian homepage, About pages, both guides, both ISPU explainer
+  pages, and bilingual Privacy pages. The homepage header links to the air-quality guide in the
   currently selected language.
 - Google Analytics support is opt-in and uses Napas's configured public
   measurement ID, with `NEXT_PUBLIC_GA_MEASUREMENT_ID` available as a build-time

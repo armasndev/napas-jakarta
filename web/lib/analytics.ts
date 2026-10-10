@@ -17,6 +17,7 @@ export type NapasAnalyticsEvent =
   | "map_layer_menu_opened"
   | "map_layer_menu_closed"
   | "map_layer_toggled"
+  | "map_index_changed"
   | "map_filter_changed"
   | "map_filters_reset"
   | "map_zoom_control_clicked"
@@ -34,8 +35,12 @@ export type NapasAnalyticsEventParameters = {
   map_layer_toggled: {
     layer: "heatmap" | "roads" | "boundaries" | "waterways" | "transit" | "landmarks" | "place_labels";
   };
+  map_index_changed: { index: "aqi" | "ispu" };
   map_filter_changed:
-    | { filter: "air_quality"; value: "all" | "good" | "moderate" | "unhealthy" | "stale" }
+    | {
+        filter: "air_quality";
+        value: "all" | "good" | "moderate" | "unhealthy" | "usg" | "very_unhealthy" | "stale";
+      }
     | { filter: "district"; value: "all" | "specific" };
   map_zoom_control_clicked: { direction: "in" | "out" };
 };

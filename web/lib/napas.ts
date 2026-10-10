@@ -12,6 +12,11 @@ export type DemoStation = {
   sourceUrl?: string | null;
   latitude: number;
   longitude: number;
+  // Derived PM2.5 AQI. Optional because the bundled demo stations carry no AQI.
+  aqi?: number | null;
+  aqiCategory?: string | null;
+  aqiHours?: number | null;
+  pm25Mean24h?: number | null;
 };
 
 export type StationCatalogRow = {
@@ -27,6 +32,11 @@ export type StationCatalogRow = {
   source: string;
   source_url: string | null;
   freshness: Record<string, unknown> | null;
+  aqi: number | null;
+  aqi_category: string | null;
+  aqi_pm25_24h_mean: number | null;
+  aqi_hours: number | null;
+  aqi_window_end: string | null;
 };
 
 export type StationCatalogResponse = {
@@ -39,6 +49,8 @@ export type StationCatalogResponse = {
     moderate_count: number;
     unhealthy_count: number;
     stale_count: number;
+    aqi_moderate_count?: number;
+    aqi_unhealthy_count?: number;
     latest_observed_at: string | null;
     overall_category: AirQualityCategory;
     source_mode: "live" | "demo";
