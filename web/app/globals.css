@@ -2452,3 +2452,31 @@ textarea {
     flex-wrap: wrap;
   }
 }
+
+/* Compact desktop legend: fits the 138px map dock without scrolling. */
+@media (min-width: 981px) {
+  .map-dock .legend {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-areas: "title key" "grid grid" "terms terms";
+    align-content: start;
+    gap: 0;
+    min-height: 0;
+    overflow: hidden;
+    padding: 8px 14px;
+  }
+  .map-dock .legend h3 { grid-area: title; align-self: center; margin: 0 0 4px; font-size: 10px; line-height: 1.2; }
+  .map-dock .legend-key { grid-area: key; align-self: center; flex-wrap: nowrap; gap: 10px; margin: 0 0 4px; padding: 0; border: 0; }
+  .map-dock .legend-key span { font-size: 9.5px; }
+  .map-dock .legend-grid { grid-area: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 2px 14px; }
+  .map-dock .legend-grid:not(.legend-grid-aqi) { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  .map-dock .legend-grid.legend-grid-aqi { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .map-dock .legend-item { align-items: flex-start; gap: 5px; font-size: 10px; line-height: 1.2; }
+  .map-dock .legend-item span { white-space: normal; }
+  .map-dock .legend-item small { font-size: 9px; white-space: nowrap; }
+  .map-dock .legend-dot { margin-top: 2px; width: 8px; height: 8px; }
+  .map-dock .legend-terms { grid-area: terms; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; margin: 0; padding-top: 6px; border-top: 1px solid var(--od-border); }
+  .map-dock .legend-term { padding: 4px 7px; border-radius: 6px; }
+  .map-dock .legend-term dt { font-size: 9px; letter-spacing: .04em; line-height: 1.1; }
+  .map-dock .legend-term dd { margin: 2px 0 0; font-size: 9px; line-height: 1.25; }
+}
