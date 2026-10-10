@@ -768,19 +768,19 @@ export function WorkspaceMap({
             </div>
             <p className="station-detail-note">{copy.map.latestLocalReading}</p>
             <div className="detail-metrics">
-              {(indexMode === "aqi" ? ["aqi", "ispu"] : ["ispu", "aqi"]).map((metric) => metric === "aqi" ? (
-                <div className={cn("detail-metric", indexMode === "aqi" && "is-active")} key="aqi">
+              {indexMode === "aqi" ? (
+                <div className="detail-metric is-active">
                   <span>{copy.map.detailAqi}</span>
                   <strong>{selectedStation.aqi ?? "—"}</strong>
                   <small>{aqiBandLabel(selectedStation.aqi ?? null, copy) ?? copy.map.aqiUnavailableShort}</small>
                 </div>
               ) : (
-                <div className={cn("detail-metric", indexMode === "ispu" && "is-active")} key="ispu">
+                <div className="detail-metric is-active">
                   <span>{copy.map.detailIspu}</span>
                   <strong>{selectedStation.ispu ?? "—"}</strong>
                   <small>{localizedCategory(selectedStation.category, language)}</small>
                 </div>
-              ))}
+              )}
               <div className="detail-metric">
                 <span>{copy.map.detailPm25}</span>
                 <strong>{selectedStation.pm25 ?? "—"} <small>{selectedStation.pm25 === null ? "" : "µg/m³"}</small></strong>
