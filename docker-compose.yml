@@ -48,7 +48,6 @@ services:
     build: .
     command: ["sh", "-c", "python -m ingestion.flow && python -m ingestion.historical"]
     environment:
-      PREFECT_SERVER_ANALYTICS_ENABLED: "false"
       POSTGRES_DSN: postgresql://napas:napas@postgres:5432/napas
       SOURCE_DATA_URL: ${SOURCE_DATA_URL:-}
     depends_on:
