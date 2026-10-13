@@ -644,8 +644,9 @@ def test_english_district_names_resolve_to_portal_districts():
     measurements = load_measurements(ROOT / "data/demo/measurements.csv")
     districts = {item.district for item in measurements}
     assert "Jakarta Pusat" in districts
-    assert get_latest_measurements(measurements, "Central Jakarta") == get_latest_measurements(
-        measurements, "Jakarta Pusat"
+    now = max(item.observed_at for item in measurements)
+    assert get_latest_measurements(measurements, "Central Jakarta", now=now) == get_latest_measurements(
+        measurements, "Jakarta Pusat", now=now
     )
     comparison = compare_locations(measurements, ["Central Jakarta", "Nowhere"])
     assert comparison[0]["available"] is True

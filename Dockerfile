@@ -4,7 +4,6 @@ COPY pyproject.toml uv.lock ./
 RUN pip install --no-cache-dir "uv==0.8.17" \
     && uv sync --frozen --no-install-project
 ENV PATH="/app/.venv/bin:$PATH"
-ENV PREFECT_SERVER_ANALYTICS_ENABLED=false
 COPY app app
 COPY ingestion ingestion
 COPY data data

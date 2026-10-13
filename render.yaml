@@ -28,8 +28,6 @@ services:
         sync: false
       - key: QDRANT_URL
         sync: false
-      - key: PREFECT_SERVER_ANALYTICS_ENABLED
-        value: "false"
 # No Render cron service is declared here. Render's cron service is not part
 # of the free web tier and could create an accidental bill. Use Railway's
 # separate cron service with `python -m ingestion.railway_cron`, or run the

@@ -14,7 +14,6 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-orchestration = ["prefect>=3,<4"]
 llm = ["openai>=1.50,<2"]
 retrieval = ["sentence-transformers>=3,<4"]
 dev = ["pytest>=8,<9", "ruff>=0.8,<1"]
