@@ -24,7 +24,9 @@ export type NapasAnalyticsEvent =
   | "map_station_question_clicked"
   | "map_legend_opened"
   | "map_legend_closed"
-  | "map_retry_clicked";
+  | "map_retry_clicked"
+  | "context_chip_added"
+  | "side_panel_tab_changed";
 
 export type NapasAnalyticsEventParameters = {
   assistant_feedback_submitted: { rating: "positive" | "negative" };
@@ -38,6 +40,8 @@ export type NapasAnalyticsEventParameters = {
     | { filter: "air_quality"; value: "all" | "good" | "moderate" | "unhealthy" | "stale" }
     | { filter: "district"; value: "all" | "specific" };
   map_zoom_control_clicked: { direction: "in" | "out" };
+  context_chip_added: { kind: "article" | "station" | "event" };
+  side_panel_tab_changed: { tab: "news" | "map" | "timeline" };
 };
 
 type ParametersFor<E extends NapasAnalyticsEvent> = E extends keyof NapasAnalyticsEventParameters

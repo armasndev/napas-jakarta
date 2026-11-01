@@ -49,6 +49,15 @@ export const ABOUT_CONTENT: Record<"en" | "id", AboutContent> = {
         ],
       },
       {
+        id: "news",
+        heading: "Where do the news, events and timeline come from?",
+        paragraphs: [
+          "Headlines and short excerpts come from a hand-picked list of Indonesian and English news outlets, and every item links to the publisher. Napas does not republish articles. English and Indonesian readers see different feeds, because the outlets differ.",
+          "News is reported by those outlets and is unverified. An event on the map sits where its article says it happened, and a report count shows how many outlets covered it, not that it is confirmed. Events leave the map after about 12 hours unless the article gives an end time. News is never used as evidence about air quality.",
+          "The timeline is written by hand from dated sources. Napas is non-commercial: no ads, no sponsorship and no paid tier. Publishers who want their content removed, or anyone who spots a mistake, can open an issue at github.com/aasnani/napas-jakarta.",
+        ],
+      },
+      {
         id: "limits",
         heading: "What can't Napas tell you?",
         bullets: [
@@ -96,6 +105,15 @@ export const ABOUT_CONTENT: Record<"en" | "id", AboutContent> = {
         heading: "Bagaimana asisten menjawab pertanyaan?",
         paragraphs: [
           "Asisten menjawab berdasarkan data stasiun dan sumber resmi yang dikurasi, seperti panduan pemerintah dan pedoman Organisasi Kesehatan Dunia (WHO). Asisten memisahkan pembacaan satu stasiun dari konteks kota yang lebih luas, menampilkan waktu pengamatan dan sumber, serta mencantumkan sitasi bila tersedia. Jika buktinya tidak ada, asisten menyatakannya dan tidak menebak. Asisten tidak mendiagnosis gejala dan tidak memberi nasihat medis.",
+        ],
+      },
+      {
+        id: "berita",
+        heading: "Dari mana berita, kejadian, dan linimasa berasal?",
+        paragraphs: [
+          "Judul dan kutipan singkat berasal dari daftar media berita Indonesia dan Inggris yang dipilih secara manual, dan setiap item terhubung ke situs penerbitnya. Napas tidak menerbitkan ulang artikel. Pembaca berbahasa Indonesia dan Inggris melihat umpan yang berbeda karena medianya berbeda.",
+          "Berita dilaporkan oleh media tersebut dan belum diverifikasi. Kejadian di peta berada di lokasi yang disebut artikelnya, dan jumlah laporan menunjukkan berapa media yang memberitakannya, bukan bahwa kejadian itu terkonfirmasi. Kejadian hilang dari peta sekitar 12 jam kemudian kecuali artikel menyebut waktu selesai. Berita tidak pernah dipakai sebagai bukti kualitas udara.",
+          "Linimasa ditulis manual dari sumber bertanggal. Napas bersifat nirlaba: tanpa iklan, sponsor, atau layanan berbayar. Penerbit yang ingin kontennya dihapus, atau siapa pun yang menemukan kesalahan, dapat membuka isu di github.com/aasnani/napas-jakarta.",
         ],
       },
       {

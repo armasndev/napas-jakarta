@@ -66,3 +66,66 @@ export function getSuggestedQuestions(
 
   return [...(language === "id" ? DEFAULT_SUGGESTED_QUESTIONS_ID : DEFAULT_SUGGESTED_QUESTIONS)];
 }
+
+export type SuggestionPlan = "premade" | "generate";
+
+/**
+ * Premade questions cover no station, one station and exactly two stations. Anything with an
+ * attached article, event or pin, or more than two stations, gets questions generated for it.
+ */
+export function suggestionPlan(input: {
+  readonly stationCount: number;
+  readonly attachmentCount: number;
+}): SuggestionPlan {
+  return input.attachmentCount > 0 || input.stationCount > 2 ? "generate" : "premade";
+}
+
+export function getPairSuggestions(first: string, second: string, language: Language = "en"): string[] {
+  return language === "id"
+    ? [
+        `Bagaimana perbandingan kualitas udara di ${first} dan ${second} saat ini?`,
+        `Mana yang lebih buruk sekarang, ${first} atau ${second}?`,
+        `Apakah lebih aman berolahraga di luar di ${first} atau ${second}?`,
+      ]
+    : [
+        `How does air quality at ${first} compare with ${second} right now?`,
+        `Which is worse at the moment, ${first} or ${second}?`,
+        `Is it safer to exercise outside at ${first} or ${second}?`,
+      ];
+}
+
+/** Shown straight away while generated questions load, and if generation fails. */
+export function getContextFallbackSuggestions(language: Language = "en"): string[] {
+  return language === "id"
+    ? [
+        "Ringkas ini dan jelaskan pengaruhnya bagi saya.",
+        "Apa yang perlu saya ketahui tentang yang saya lampirkan?",
+        "Apa yang tidak ditunjukkan oleh sumber-sumber ini?",
+      ]
+    : [
+        "Summarise this and tell me how it affects me.",
+        "What should I know about what I attached?",
+        "What do these sources not show?",
+      ];
+}
+
+const MAX_GENERATED = 3;
+const MAX_GENERATED_LENGTH = 120;
+
+/** Accept only short, plain questions from the model; drop anything else. */
+export function sanitizeGeneratedSuggestions(raw: unknown): string[] {
+  const list = Array.isArray(raw) ? raw : [];
+  const seen = new Set<string>();
+  const clean: string[] = [];
+  for (const item of list) {
+    if (typeof item !== "string") continue;
+    const text = item.replace(/\s+/gu, " ").trim();
+    const key = text.toLowerCase();
+    if (text.length < 8 || text.length > MAX_GENERATED_LENGTH || seen.has(key)) continue;
+    if (/https?:|www\.|<|>|[`{}]/iu.test(text) || !/[?？]$/u.test(text)) continue;
+    seen.add(key);
+    clean.push(text);
+    if (clean.length === MAX_GENERATED) break;
+  }
+  return clean;
+}
