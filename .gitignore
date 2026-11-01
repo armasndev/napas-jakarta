@@ -52,3 +52,4 @@ Thumbs.db
 *.swo
 .aider*
 .claude/
+.local-news.json
