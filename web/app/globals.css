@@ -324,7 +324,8 @@ textarea {
 .kpi-detail { min-width: 0; overflow: hidden; color: var(--od-muted); font-size: 9px; line-height: 1.1; text-overflow: ellipsis; white-space: nowrap; }
 .kpi-track { display: block; height: 4px; overflow: hidden; border-radius: 999px; background: color-mix(in oklch, var(--kpi-accent) 15%, var(--od-surface)); }
 .kpi-track span { display: block; height: 100%; min-width: 0; border-radius: inherit; background: var(--kpi-accent); }
-.filters { display: flex; grid-area: filters; align-items: end; justify-content: flex-end; flex-wrap: wrap; gap: 8px; }
+.filters { display: flex; grid-area: filters; align-items: end; justify-content: flex-end; flex-wrap: nowrap; gap: 8px; }
+.filters .station-list-button { margin-top: 0; }
 .filter-label { display: grid; gap: 3px; color: var(--od-muted); font-size: 10px; font-weight: 700; letter-spacing: .04em; }
 .filter-label select { min-width: 125px; height: 37px; padding: 0 28px 0 10px; border: 1px solid var(--od-border); border-radius: 7px; background: var(--od-surface); color: var(--od-fg); font-size: 12px; font-weight: 600; }
 .map-filter-dropdown { position: relative; min-width: 125px; }
@@ -371,7 +372,9 @@ textarea {
 .legend h3 { margin: 0 0 10px; font-size: 11px; letter-spacing: .075em; text-transform: uppercase; }
 .legend-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 9px 11px; }
 .legend-item { display: flex; align-items: center; gap: 7px; color: var(--od-fg); font-size: 11px; }
-.legend-item span { white-space: nowrap; }
+.legend-item span { white-space: normal; }
+.legend-item small { white-space: nowrap; }
+.legend-grid.legend-grid-aqi { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 .legend-item small { color: var(--od-muted); font-size: 10px; }
 .legend-dot { flex: none; width: 10px; height: 10px; border-radius: 50%; }
 .legend-dot.good { background: var(--od-good); }
@@ -389,7 +392,7 @@ textarea {
 .legend-term { min-width: 0; padding: 8px 9px; border: 1px solid var(--od-border); border-radius: 8px; background: var(--od-bg); box-shadow: var(--od-elevation-control); }
 .legend-term dt { color: var(--od-fg); font-size: .6875rem; font-weight: 800; letter-spacing: .045em; line-height: 1.1; text-transform: uppercase; }
 .legend-term dd { margin: 4px 0 0; color: var(--od-muted); font-size: .6875rem; line-height: 1.4; }
-.station-detail { min-width: 0; padding: 17px 23px 15px; }
+.station-detail { min-width: 0; padding: 12px 23px 10px; }
 .station-detail:not(.station-detail-empty) { display: flex; flex-direction: column; }
 .station-detail-empty { display: grid; align-content: center; min-height: 150px; }
 .station-detail-empty p { margin: 5px 0 0; color: var(--od-muted); font-size: 12px; }
@@ -414,12 +417,18 @@ textarea {
 .detail-metric span { display: block; color: var(--od-muted); font-size: 11px; letter-spacing: .06em; text-transform: uppercase; }
 .detail-metric strong { display: block; margin-top: 3px; font-family: "Cantarell", sans-serif; font-size: 26px; letter-spacing: -.025em; line-height: 1.12; }
 .detail-metric strong small { color: var(--od-muted); font-family: inherit; font-size: 11px; font-weight: 600; letter-spacing: 0; }
+.detail-metric > small { display: block; margin-top: 2px; color: var(--od-muted); font-size: 11px; font-weight: 600; }
+.detail-metric.is-active span { color: var(--od-accent-dark); }
+.detail-metric.is-active strong { color: var(--od-fg); }
+.freshness-badge { padding: 2px 8px; border-radius: 999px; font-weight: 700; }
+.freshness-badge.is-fresh { background: var(--od-good-soft); color: oklch(0.32 0.09 170); }
+.freshness-badge.is-stale { background: var(--od-stale-soft); color: var(--od-fg); }
 .ask-station { display: inline-flex; min-height: 36px; align-items: center; justify-content: center; gap: 7px; padding: 0 12px; border: 1px solid var(--od-action); border-radius: var(--od-control-radius); background: var(--od-action); color: var(--od-surface); box-shadow: var(--od-elevation-control); font-size: 11px; font-weight: 800; white-space: nowrap; }
 .ask-station svg { width: 15px; height: 15px; flex: 0 0 auto; }
 .ask-station:hover { border-color: var(--od-fg); background: var(--od-fg); box-shadow: var(--od-elevation-card); transform: translateY(-1px); }
 .ask-station:active { transform: translateY(0); }
 .ask-station:focus-visible { outline: 3px solid var(--od-accent-dark); outline-offset: 3px; }
-.station-detail:not(.station-detail-empty) .detail-meta { margin-top: auto; padding-top: 12px; border-top: 1px solid var(--od-border); }
+.station-detail:not(.station-detail-empty) .detail-meta { margin-top: auto; padding-top: 8px; border-top: 1px solid var(--od-border); }
 .detail-meta { display: flex; flex-wrap: wrap; gap: 12px; color: var(--od-muted); font-size: 11px; }
 .detail-meta strong { color: var(--od-fg); font-weight: 600; }
 .detail-meta a { color: inherit; text-decoration: underline; text-decoration-thickness: .08em; text-underline-offset: .15em; }
@@ -470,7 +479,7 @@ textarea {
     gap: 10px;
   }
   .map-kpis { min-width: 0; }
-  .filters { justify-content: flex-start; }
+  .filters { justify-content: flex-start; flex-wrap: wrap; }
 }
 
 @container map-panel (max-width: 560px) {
@@ -581,7 +590,7 @@ textarea {
   .map-kpis { margin-top: 12px; }
   .map-kpi { min-width: 0; flex: 1; }
   .map-kpi small { display: none; }
-  .filters { justify-content: flex-start; margin-top: 12px; gap: 7px; }
+  .filters { justify-content: flex-start; flex-wrap: wrap; margin-top: 12px; gap: 7px; }
   .filter-label { min-width: 125px; flex: 1; }
   .filter-label select { width: 100%; min-width: 0; }
   .station-list-button { width: 100%; margin-top: 0; }
@@ -1238,7 +1247,6 @@ textarea {
   .map-head {
     grid-template-columns: minmax(0, 0.75fr) minmax(0, 1fr);
     grid-template-rows: auto auto;
-    grid-template-areas: "title filters" "kpis kpis";
     align-items: center;
     gap: 8px 12px;
     padding: 10px clamp(12px, 1.35vw, 20px);
@@ -1679,11 +1687,11 @@ textarea {
 
 @container map-panel (max-width: 760px) {
   .map-head {
-    grid-template-columns: minmax(0, 0.75fr) minmax(0, 1fr);
-    grid-template-areas: "title filters" "kpis kpis";
-    grid-template-rows: auto auto;
-    align-items: center;
-    gap: 6px 8px;
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-areas: "title" "kpis" "filters";
+    grid-template-rows: auto auto auto;
+    align-items: stretch;
+    gap: 8px;
     padding: 9px 12px;
   }
 
@@ -1928,19 +1936,22 @@ textarea {
   .map-head {
     grid-template-columns: minmax(150px, .62fr) minmax(300px, 1fr);
     grid-template-rows: auto auto;
-    grid-template-areas: "title filters" "kpis kpis";
     align-items: center;
     gap: 7px 12px;
     padding: 9px clamp(12px, 1.35vw, 20px);
   }
 
   .filters {
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr)) auto;
+    display: flex;
+    flex-wrap: nowrap;
     align-items: end;
     justify-self: end;
-    width: min(100%, 410px);
+    max-width: 100%;
     gap: 6px;
+  }
+
+  .filters > * {
+    flex: none;
   }
 
   .filter-label {
@@ -2333,5 +2344,279 @@ textarea {
   .napas-od-app .napas-topic-trigger {
     width: 100%;
     max-width: none;
+  }
+}
+
+
+.layer-toggle:has(input:disabled) {
+  opacity: 0.5;
+}
+
+/* Index toggle (AQI / ISPU) beside the air-quality level filter. */
+.index-segment {
+  position: relative;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  align-items: center;
+  height: 37px;
+  min-width: 118px;
+  margin: 0;
+  padding: 3px;
+  border: 1px solid var(--od-border);
+  border-radius: var(--od-control-radius);
+  background: var(--od-bg);
+}
+
+.index-segment-thumb {
+  position: absolute;
+  top: 3px;
+  bottom: 3px;
+  left: 3px;
+  width: calc(50% - 3px);
+  border-radius: 6px;
+  background: var(--od-surface);
+  box-shadow: 0 1px 2px oklch(0.24 0.04 246 / 0.14);
+  transition: transform 260ms cubic-bezier(0.2, 0.7, 0.2, 1);
+}
+
+.index-segment[data-index="ispu"] .index-segment-thumb {
+  transform: translateX(100%);
+}
+
+.index-segment-option {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  height: 100%;
+  place-items: center;
+  padding: 0 10px;
+  color: var(--od-muted);
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: color 200ms ease;
+}
+
+.index-segment-option:has(input:checked) {
+  color: var(--od-fg);
+}
+
+.index-segment-option:has(input:focus-visible) {
+  outline: 2px solid var(--od-action);
+  outline-offset: 2px;
+  border-radius: 6px;
+}
+
+.index-segment-option input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: 0;
+  opacity: 0;
+}
+
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .index-segment-thumb,
+  .index-segment-option {
+    transition: none;
+  }
+}
+
+/* Side-by-side header only when the map panel itself is wide enough for the filter row. */
+@container map-panel (min-width: 761px) {
+  .map-head {
+    grid-template-areas: "title filters" "kpis kpis";
+  }
+}
+
+/* Narrow map panels stack the filter row full width, and it may wrap there. */
+@container map-panel (max-width: 760px) {
+  .map-head {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-areas: "title" "kpis" "filters";
+  }
+
+  .filters {
+    justify-self: stretch;
+    width: 100%;
+    flex-wrap: wrap;
+  }
+}
+
+/* Compact desktop legend: fits the 138px map dock without scrolling. */
+@media (min-width: 981px) {
+  .map-dock .legend {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-areas: "title key" "grid grid" "terms terms";
+    align-content: start;
+    gap: 0;
+    min-height: 0;
+    overflow: hidden;
+    padding: 8px 14px;
+  }
+  .map-dock .legend h3 { grid-area: title; align-self: center; margin: 0 0 4px; font-size: 10px; line-height: 1.2; }
+  .map-dock .legend-key { grid-area: key; align-self: center; flex-wrap: nowrap; gap: 10px; margin: 0 0 4px; padding: 0; border: 0; }
+  .map-dock .legend-key span { font-size: 9.5px; }
+  .map-dock .legend-grid { grid-area: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 2px 14px; }
+  .map-dock .legend-grid:not(.legend-grid-aqi) { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  .map-dock .legend-grid.legend-grid-aqi { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .map-dock .legend-item { align-items: flex-start; gap: 5px; font-size: 10px; line-height: 1.2; }
+  .map-dock .legend-item span { white-space: normal; }
+  .map-dock .legend-item small { font-size: 9px; white-space: nowrap; }
+  .map-dock .legend-dot { margin-top: 2px; width: 8px; height: 8px; }
+  .map-dock .legend-terms { grid-area: terms; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; margin: 0; padding-top: 6px; border-top: 1px solid var(--od-border); }
+  .map-dock .legend-term { padding: 4px 7px; border-radius: 6px; }
+  .map-dock .legend-term dt { font-size: 9px; letter-spacing: .04em; line-height: 1.1; }
+  .map-dock .legend-term dd { margin: 2px 0 0; font-size: 9px; line-height: 1.25; }
+
+/* Wide screens have spare room in the dock, so the legend scales up. */
+@media (min-width: 1600px) {
+  .map-dock .legend {
+    padding: 10px 22px 8px;
+  }
+  .map-dock .legend h3 { font-size: 11px; margin-bottom: 6px; }
+  .map-dock .legend-grid { gap: 5px 26px; }
+  .map-dock .legend-item { font-size: 12px; gap: 7px; }
+  .map-dock .legend-item small { font-size: 11px; }
+  .map-dock .legend-key { gap: 14px; }
+  .map-dock .legend-key span { font-size: 11px; }
+  .map-dock .legend-terms { gap: 10px; padding-top: 6px; }
+  .map-dock .legend-term { padding: 5px 10px; }
+  .map-dock .legend-term dt { font-size: 10px; }
+  .map-dock .legend-term dd { font-size: 10.5px; line-height: 1.25; margin-top: 2px; }
+}
+}
+
+/* Station detail card: uses the same tokens as the KPI cards and index toggle. */
+.map-dock .station-detail:not(.station-detail-empty) {
+  gap: 3px;
+  padding: 6px 14px;
+  background: var(--od-surface);
+  overflow-y: auto;
+}
+
+.map-dock .station-detail h3 {
+  overflow: hidden;
+  font-size: 14px;
+  letter-spacing: -.02em;
+  line-height: 1.2;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.map-dock .station-detail .station-detail-top > div:first-child {
+  min-width: 0;
+}
+
+.map-dock .station-detail .station-detail-eyebrow {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.map-dock .station-detail-note {
+  margin: 0;
+  font-size: 11px;
+  line-height: 1.3;
+}
+
+.map-dock .detail-metrics {
+  align-self: stretch;
+  width: 100%;
+  gap: 6px;
+}
+
+.map-dock .detail-metric {
+  min-width: 0;
+  flex: 1 1 0;
+  padding: 3px 8px;
+  border: 1px solid var(--od-border);
+  border-top: 2px solid var(--od-border);
+  border-radius: 9px;
+  background: var(--od-bg);
+}
+
+.map-dock .detail-metric.is-active {
+  border-top-color: var(--od-action);
+}
+
+.map-dock .detail-metric span {
+  color: var(--od-fg);
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: .045em;
+  line-height: 1.05;
+  text-transform: uppercase;
+}
+
+.map-dock .detail-metric.is-active span {
+  color: var(--od-fg);
+}
+
+.map-dock .detail-metric strong {
+  margin-top: 2px;
+  color: var(--od-fg);
+  font-size: 18px;
+  letter-spacing: -.035em;
+  line-height: .95;
+}
+
+.map-dock .detail-metric strong small {
+  font-size: 10px;
+}
+
+.map-dock .detail-metric > small {
+  margin-top: 3px;
+  font-size: 10px;
+  font-weight: 700;
+}
+
+.map-dock .category-pill {
+  padding: 4px 9px;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: .045em;
+  text-transform: uppercase;
+}
+
+.map-dock .freshness-badge {
+  padding: 1px 7px;
+  line-height: 1.3;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: .045em;
+  text-transform: uppercase;
+}
+
+.map-dock .station-detail:not(.station-detail-empty) .detail-meta {
+  margin-top: 0;
+  padding-top: 4px;
+}
+
+.map-dock .detail-meta {
+  align-items: center;
+  gap: 2px 10px;
+  font-size: 10px;
+}
+
+.map-dock .detail-meta strong {
+  font-size: 10px;
+}
+
+/* Station card gets the wider share of the dock; the legend keeps its compact grid. Card scrolls internally if it still exceeds the dock (checked at 1280x820). */
+@media (min-width: 981px) {
+  .map-dock {
+    grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr);
   }
 }

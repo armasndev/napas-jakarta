@@ -28,7 +28,7 @@ NAPAS_API_ORIGIN=https://<fastapi-origin>
 
 The Gemini key must never be prefixed with `NEXT_PUBLIC_` or sent to the
 browser. The eventual public hostname is the Cloudflare-managed
-`napasjakarta.armasn.dev`; DNS and HTTPS cutover wait until the Railway origin
+`napasjakarta.com`; DNS and HTTPS cutover wait until the Railway origin
 has passed the replacement web and FastAPI smoke checks.
 
 The web and API services share one separately generated server-to-server token:
@@ -63,7 +63,7 @@ Railway's production-shaped topology has four optional pieces:
 3. **PostgreSQL** is optional. It stores runtime observations, historical
    context, private interaction events, feedback, and ingestion facts when the
    recommended live-data path is selected.
-4. **Ingestion** uses `railway-cron.toml` and runs every two hours. It refreshes station
+4. **Ingestion** uses `railway-cron.toml` and runs every hour. It refreshes station
    observations when configured and applies interaction retention cleanup for
    either PostgreSQL or the strict-$0 JSONL fallback.
 

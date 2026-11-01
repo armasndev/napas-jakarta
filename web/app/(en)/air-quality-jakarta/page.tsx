@@ -68,6 +68,13 @@ export default function JakartaAirQualityGuide() {
         </p>
       </section>
 
+      <section aria-labelledby="aqi-vs-ispu" className={styles.section}>
+        <h2 id="aqi-vs-ispu">How does AQI compare with ISPU?</h2>
+        <p>
+          AQI, the Air Quality Index, is the index of the US Environmental Protection Agency. Napas Jakarta also shows a PM2.5 AQI, calculated from the last 24 hours of a station's PM2.5 readings with the EPA method, because many people know that scale. Napas derives this number. It is not published by the Jakarta government, and the official Jakarta value is ISPU. Both indexes turn pollutant levels into a number, but their scales and category limits differ, so do not compare them directly. A station shows an AQI only when it has at least 18 hourly readings in the last 24 hours.
+        </p>
+      </section>
+
       <section aria-labelledby="check-current" className={styles.section}>
         <h2 id="check-current">How can I check current air quality in Jakarta?</h2>
         <p>

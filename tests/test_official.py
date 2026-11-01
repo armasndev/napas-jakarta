@@ -67,6 +67,27 @@ def test_official_portal_snapshot_rows_are_normalized():
     assert stations[0]["latitude"] == -6.2
 
 
+def test_official_snapshot_drops_concentration_when_another_pollutant_dominates():
+    html = (
+        'window.__SPKU_DATA__ = [{"id":"s1","name":"Bundaran HI","area":"Jakarta Pusat",'
+        '"dominantMetricTime":"2026-09-07T04:00:00","dominantMetric":"O3",'
+        '"dominantRawValue":39.79,"ispu":99,"status":"Sedang"}];'
+    )
+    parsed = parse_rows(spku_html_rows(html), "https://udara.jakarta.go.id/")
+    assert parsed[0].concentration is None
+    assert parsed[0].ispu_value == 99
+
+
+def test_official_snapshot_keeps_concentration_when_pm25_dominates():
+    html = (
+        'window.__SPKU_DATA__ = [{"id":"s1","name":"Bundaran HI","area":"Jakarta Pusat",'
+        '"dominantMetricTime":"2026-09-07T04:00:00","dominantMetric":"PM25",'
+        '"dominantRawValue":39.79,"ispu":99,"status":"Sedang"}];'
+    )
+    parsed = parse_rows(spku_html_rows(html), "https://udara.jakarta.go.id/")
+    assert parsed[0].concentration == 39.79
+
+
 def test_official_fetch_retries_transient_read_timeout(monkeypatch):
     import requests
 

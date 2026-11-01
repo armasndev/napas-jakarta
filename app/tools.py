@@ -6,6 +6,7 @@ import math
 from datetime import UTC, date, datetime
 from typing import TypedDict
 
+from .aqi import station_pm25_aqi
 from .data import district_matches, latest_by_station
 from .models import Document, Measurement
 
@@ -314,9 +315,14 @@ def get_latest_measurements(
     if location:
         needle = _location_needle(location)
         rows = [x for x in rows if needle in (x.district + " " + x.station_name).lower()]
+    # AQI is PM2.5 only and needs 18 hourly readings in the trailing 24 hours.
+    aqi_by_station = (
+        station_pm25_aqi(measurements, now or datetime.now(UTC)) if pollutant == "PM2.5" else {}
+    )
     output = []
     for x in rows:
         row_freshness = freshness(x, now=now)
+        station_aqi = aqi_by_station.get(x.station_id) or {}
         output.append(
             {
             "station_id": x.station_id,
@@ -327,6 +333,10 @@ def get_latest_measurements(
             "unit": x.concentration_unit,
             "averaging_period": x.averaging_period,
             "ispu": x.ispu_value,
+            "aqi": None if row_freshness["stale"] else station_aqi.get("aqi"),
+            "aqi_category": None if row_freshness["stale"] else station_aqi.get("category"),
+            "aqi_pm25_24h_mean": None if row_freshness["stale"] else station_aqi.get("pm25_24h_mean"),
+            "aqi_hours": station_aqi.get("hours"),
             "category": "Stale / missing" if row_freshness["stale"] else x.ispu_category,
             "observed_at": x.observed_at.isoformat(),
             "source": x.source,

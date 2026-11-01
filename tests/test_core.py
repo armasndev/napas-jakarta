@@ -213,6 +213,8 @@ def test_station_catalog_preserves_coordinates_and_missing_observations():
         "moderate_count": 0,
         "unhealthy_count": 0,
         "stale_count": 2,
+        "aqi_moderate_count": 0,
+        "aqi_unhealthy_count": 0,
         "latest_observed_at": None,
         "overall_category": "Stale / missing",
         "source_mode": "live",
@@ -233,6 +235,11 @@ def test_station_catalog_preserves_coordinates_and_missing_observations():
             "freshness": {"status": "stale"},
             "photo_url": None,
             "photo_credit": None,
+            "aqi": None,
+            "aqi_category": None,
+            "aqi_pm25_24h_mean": None,
+            "aqi_hours": None,
+            "aqi_window_end": None,
         },
         {
             "id": "s2",
@@ -249,6 +256,11 @@ def test_station_catalog_preserves_coordinates_and_missing_observations():
             "freshness": None,
             "photo_url": None,
             "photo_credit": None,
+            "aqi": None,
+            "aqi_category": None,
+            "aqi_pm25_24h_mean": None,
+            "aqi_hours": None,
+            "aqi_window_end": None,
         },
     ]
 
@@ -636,8 +648,9 @@ def test_english_district_names_resolve_to_portal_districts():
     measurements = load_measurements(ROOT / "data/demo/measurements.csv")
     districts = {item.district for item in measurements}
     assert "Jakarta Pusat" in districts
-    assert get_latest_measurements(measurements, "Central Jakarta") == get_latest_measurements(
-        measurements, "Jakarta Pusat"
+    now = max(item.observed_at for item in measurements)
+    assert get_latest_measurements(measurements, "Central Jakarta", now=now) == get_latest_measurements(
+        measurements, "Jakarta Pusat", now=now
     )
     comparison = compare_locations(measurements, ["Central Jakarta", "Nowhere"])
     assert comparison[0]["available"] is True

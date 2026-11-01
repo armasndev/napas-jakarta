@@ -90,7 +90,7 @@ To learn more about eve, explore these resources:
 
 The planned deployment target is Railway. Keep the web app and FastAPI service
 as separate services while the free-tier topology is validated. The public
-hostname milestone is the Cloudflare-managed `napasjakarta.armasn.dev`, mapped
+hostname milestone is the Cloudflare-managed `napasjakarta.com`, mapped
 to Railway only after the Railway origin is healthy and HTTPS is verified.
 
 The Railway web service uses [`Dockerfile`](Dockerfile),

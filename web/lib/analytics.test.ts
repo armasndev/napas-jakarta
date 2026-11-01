@@ -4,8 +4,8 @@ import { isPublicAnalyticsPath, sanitizeAnalyticsUrl, trackNapasEvent } from "./
 
 test("sanitizes analytics page locations by removing query strings and fragments", () => {
   assert.equal(
-    sanitizeAnalyticsUrl("https://napasjakarta.armasn.dev/about?email=person@example.com#team", true),
-    "https://napasjakarta.armasn.dev/about",
+    sanitizeAnalyticsUrl("https://napasjakarta.com/about?email=person@example.com#team", true),
+    "https://napasjakarta.com/about",
   );
 });
 
@@ -29,7 +29,7 @@ test("sets sanitized page context before sending an opted-in interaction event",
     configurable: true,
     value: {
       location: {
-        href: "https://napasjakarta.armasn.dev/?email=person@example.com#contact",
+        href: "https://napasjakarta.com/?email=person@example.com#contact",
         pathname: "/",
       },
       napasAnalyticsConsent: "granted",
@@ -44,7 +44,7 @@ test("sets sanitized page context before sending an opted-in interaction event",
   try {
     trackNapasEvent("map_zoom_control_clicked", { direction: "in" });
     assert.deepEqual(calls, [
-      ["set", "page_location", "https://napasjakarta.armasn.dev/"],
+      ["set", "page_location", "https://napasjakarta.com/"],
       ["set", "page_referrer", "https://search.example"],
       ["event", "map_zoom_control_clicked", { direction: "in" }],
     ]);

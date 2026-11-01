@@ -200,20 +200,5 @@ def run_ingestion(data_dir: str | Path = "data") -> dict[str, int]:
     return {"documents": len(documents), "chunks": len(chunks), "measurements": len(measurements)}
 
 
-try:
-    from prefect import flow, task
-
-    @task(name="validate-and-publish", retries=2, retry_delay_seconds=5)
-    def ingestion_task(data_dir: str = "data") -> dict[str, int]:
-        return run_ingestion(data_dir)
-
-    @flow(name="napas-jakarta-ingestion")
-    def prefect_ingestion(data_dir: str = "data") -> dict[str, int]:
-        return ingestion_task(data_dir)
-except ImportError:
-    ingestion_task = run_ingestion
-    prefect_ingestion = run_ingestion
-
-
 if __name__ == "__main__":
-    print(prefect_ingestion())
+    print(run_ingestion())

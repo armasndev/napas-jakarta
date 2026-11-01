@@ -1,10 +1,9 @@
-.PHONY: setup prefect-run test eval validate-ground-truth validate-sources refresh-history export-review run up down smoke compose-up
+.PHONY: setup ingest test eval validate-ground-truth validate-sources refresh-history export-review run up down smoke compose-up
 
 setup:
 	uv sync --frozen --extra dev
 
-prefect-run:
-	uv sync --frozen --extra orchestration
+ingest:
 	uv run python -m ingestion.flow
 
 test: setup

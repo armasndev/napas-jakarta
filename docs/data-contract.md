@@ -54,3 +54,20 @@ the official portal.
 - Demo station coordinates are approximate and are never presented as official
   geospatial metadata. When `SOURCE_DATA_URL` is set to the official portal,
   the UI uses the portal's station IDs and coordinates instead.
+
+## Derived PM2.5 AQI
+
+`app/aqi.py` derives a US EPA PM2.5 AQI per station from the official portal's
+hourly PM2.5 readings. It is a Napas calculation, not a published Jakarta figure.
+
+- Uses the EPA 2024 PM2.5 breakpoints (effective 6 May 2024), with
+  concentrations truncated to one decimal first.
+- Needs at least 18 hourly PM2.5 values in the trailing 24 hours. Otherwise
+  `aqi` is `null`.
+- Abstains above 225.4 µg/m³ because the Hazardous sub-breakpoints are not yet
+  confirmed against EPA's technical document.
+- The `/stations` catalog exposes `aqi`, `aqi_category`, `aqi_pm25_24h_mean`,
+  `aqi_hours` and `aqi_window_end`. The assistant's latest-reading tool exposes
+  the same AQI fields. ISPU fields are unchanged.
+- The official connector stores a concentration as PM2.5 only when the portal
+  reports PM25 as the dominant metric (`dominantMetric`).
