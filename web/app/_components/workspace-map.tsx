@@ -1,6 +1,7 @@
 "use client";
 
 import {
+  CameraIcon,
   Layers2Icon,
   ChevronDownIcon,
   MapPinIcon,
@@ -29,6 +30,10 @@ import {
 } from "@/lib/napas";
 import { normalizeHeatmapWeight, STATION_HEATMAP_LAYER_ID } from "@/lib/map-heatmap";
 import { MAP_LAYER_DEFAULTS, mapLayerMatches, type MapLayerKey } from "@/lib/map-layers";
+import { CHIP_DRAG_TYPE, chipKey, type ContextChip, type EventPin } from "@/lib/news";
+import { getNewsCopy } from "@/lib/news-copy";
+import { categoryBadgeColor, formatNewsTime } from "@/lib/news-format";
+import { eventChip, MapEvents } from "./map-events";
 
 const MAP_STYLE_URL =
   process.env.NEXT_PUBLIC_MAP_STYLE_URL ?? "https://tiles.openfreemap.org/styles/liberty";
@@ -205,6 +210,10 @@ function isStationCatalogResponse(value: unknown): value is StationCatalogRespon
   );
 }
 
+function httpsPhotoUrl(value: string | null | undefined): string | null {
+  return typeof value === "string" && value.startsWith("https://") ? value : null;
+}
+
 function toMapStation(row: StationCatalogResponse["stations"][number], language: Language): DemoStation {
   return {
     category: row.category,
@@ -218,11 +227,15 @@ function toMapStation(row: StationCatalogResponse["stations"][number], language:
     pm25: row.pm25,
     source: displaySource(row.source, language),
     sourceUrl: directSourceUrl(row.source_url),
+    photoUrl: httpsPhotoUrl(row.photo_url),
+    photoCredit: row.photo_credit ?? null,
   };
 }
 
 export function WorkspaceMap({
   ariaLabelledBy,
+  attachedKeys,
+  onChipAdd,
   id,
   language,
   isMobileOverlayOpen = false,
@@ -234,6 +247,8 @@ export function WorkspaceMap({
   selectedStationId,
 }: {
   readonly ariaLabelledBy?: string;
+  readonly attachedKeys: ReadonlySet<string>;
+  readonly onChipAdd: (chip: ContextChip) => void;
   readonly id?: string;
   readonly language: Language;
   readonly isMobileOverlayOpen?: boolean;
@@ -260,6 +275,10 @@ export function WorkspaceMap({
   const [layersOpen, setLayersOpen] = useState(false);
   const [stationListOpen, setStationListOpen] = useState(false);
   const [heatmapVisible, setHeatmapVisible] = useState(false);
+  const [eventsVisible, setEventsVisible] = useState(false);
+  const [eventPins, setEventPins] = useState<readonly EventPin[]>([]);
+  const [selectedEventId, setSelectedEventId] = useState<string>();
+  const newsCopy = getNewsCopy(language);
   const stationDialogRef = useRef<HTMLDialogElement>(null);
   const mobileLegendDialogRef = useRef<HTMLDialogElement>(null);
   const [layers, setLayers] = useState(LAYER_DEFAULTS);
@@ -536,6 +555,113 @@ export function WorkspaceMap({
     });
   };
 
+  const selectedEvent = eventsVisible ? eventPins.find((pin) => pin.id === selectedEventId) : undefined;
+  let pinChip: ContextChip | undefined;
+  let pinLines: readonly string[] = [];
+  if (selectedEvent) {
+    const events = newsCopy.events;
+    pinChip = eventChip(selectedEvent, language);
+    pinLines = [
+      `${events.reports(selectedEvent.reports)}, ${events.unverified}`,
+      selectedEvent.event_start
+        ? formatNewsTime(selectedEvent.event_start, language)
+        : events.timeNotStated,
+      events.status[selectedEvent.status] ?? events.status.unknown,
+      `${events.placeFromText}: ${selectedEvent.location_text ?? "—"}`,
+    ];
+  } else if (selectedStation) {
+    pinChip = {
+      badge: selectedStation.ispu === null ? undefined : String(selectedStation.ispu),
+      badgeColor: categoryBadgeColor(selectedStation.category),
+      id: selectedStation.id,
+      kind: "station",
+      sub: `${localizedCategory(selectedStation.category, language)} · ${formatNewsTime(selectedStation.observedAt, language)}`,
+      title: selectedStation.name,
+    };
+    pinLines = [pinChip.sub];
+  }
+  const pinAttached = pinChip ? attachedKeys.has(chipKey(pinChip)) : false;
+  const stationDetail = selectedEvent ? undefined : selectedStation;
+  const closeDetail = () => (selectedEvent ? setSelectedEventId(undefined) : onStationClear("map_detail"));
+  const detailOverlay = pinChip ? (
+    <aside aria-label={pinChip.title} aria-live="polite" className="detail-overlay">
+      <div
+        className="detail-drag"
+        draggable
+        onDragStart={(event) => {
+          event.dataTransfer.setData(CHIP_DRAG_TYPE, JSON.stringify(pinChip));
+          event.dataTransfer.setData("text/plain", pinChip.title);
+          event.dataTransfer.effectAllowed = "copy";
+        }}
+      >
+        {stationDetail ? (
+          <figure className="detail-photo-wrap">
+            <div aria-label={newsCopy.detail.photoAlt} className="detail-photo" role="img">
+              <CameraIcon aria-hidden="true" />
+              <span>{newsCopy.detail.photo}</span>
+              {stationDetail.photoUrl ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  alt={`${stationDetail.name}`}
+                  className="detail-photo-img"
+                  key={stationDetail.photoUrl}
+                  loading="lazy"
+                  onError={(event) => {
+                    event.currentTarget.hidden = true;
+                  }}
+                  referrerPolicy="no-referrer"
+                  src={stationDetail.photoUrl}
+                />
+              ) : null}
+            </div>
+            {stationDetail.photoUrl && stationDetail.photoCredit ? (
+              <figcaption className="detail-photo-credit">{stationDetail.photoCredit}</figcaption>
+            ) : null}
+          </figure>
+        ) : null}
+        <div className="detail-head">
+          <span className="pin-card-kind">{newsCopy.chips.kinds[pinChip.kind]}</span>
+        </div>
+        <h3 className="detail-title">{pinChip.title}</h3>
+        {stationDetail ? <p className="station-district">{localizedDistrict(stationDetail.district, language)}</p> : null}
+      </div>
+      <button aria-label={newsCopy.detail.close} className="detail-close" onClick={closeDetail} type="button">
+        <XIcon aria-hidden="true" />
+      </button>
+      <div className="detail-content">
+        {stationDetail ? (
+          <>
+            <span className={cn("category-pill", categoryKey[stationDetail.category])}>{localizedCategory(stationDetail.category, language)}</span>
+            <p className="station-detail-note">{copy.map.latestLocalReading}</p>
+            <div className="detail-metrics">
+              <div className="detail-metric"><span>ISPU</span><strong>{stationDetail.ispu ?? "—"}</strong></div>
+              <div className="detail-metric"><span>PM2.5</span><strong>{stationDetail.pm25 ?? "—"} <small>{stationDetail.pm25 === null ? "" : "µg/m³"}</small></strong></div>
+            </div>
+            <div className="detail-meta">
+              <span>{copy.map.observed} <strong>{formatObservationTime(stationDetail.observedAt, language)}</strong></span>
+              <span>
+                {copy.map.source}{" "}
+                {stationDetail.sourceUrl ? (
+                  <a href={stationDetail.sourceUrl} rel="noopener noreferrer" target="_blank"><strong>{stationDetail.source}</strong></a>
+                ) : <strong>{stationDetail.source}</strong>}
+              </span>
+            </div>
+          </>
+        ) : (
+          pinLines.map((line) => <p className="pin-card-line" key={line}>{line}</p>)
+        )}
+      </div>
+      <button
+        className="pin-card-add"
+        disabled={pinAttached}
+        onClick={() => pinChip && onChipAdd(pinChip)}
+        type="button"
+      >
+        {pinAttached ? newsCopy.chips.pinAdded : newsCopy.chips.addPin}
+      </button>
+    </aside>
+  ) : null;
+
   return (
     <section
       aria-label={ariaLabelledBy ? undefined : copy.map.ariaLabel}
@@ -616,7 +742,7 @@ export function WorkspaceMap({
         </div>
       </header>
 
-      <div className="map-stage" id="map-stage">
+      <div className="map-stage" data-detail={pinChip ? "open" : "closed"} id="map-stage">
         <div ref={mapContainer} aria-label={copy.map.interactiveMap} className="napas-real-map" role="region" />
 
         <div className="map-aids" aria-hidden="true">
@@ -638,6 +764,18 @@ export function WorkspaceMap({
           }} type="button"><Layers2Icon /></button>
         </div>
 
+        <MapEvents
+          language={language}
+          map={mapReady ? mapRef.current : null}
+          onEvents={setEventPins}
+          onSelect={(pin) => setSelectedEventId(pin.id)}
+          visible={eventsVisible}
+        />
+        <div aria-label={copy.map.legendAria} className="map-legend-overlay" role="group">
+          <LegendContent language={language} part="key" />
+        </div>
+        {detailOverlay}
+
         {layersOpen ? (
           <div className="layers-menu" id="layers-menu" role="dialog" aria-label={copy.map.mapLayers}>
             <div className="layer-heading">{copy.map.airQuality}</div>
@@ -646,6 +784,11 @@ export function WorkspaceMap({
               trackNapasEvent("map_layer_toggled", { layer: "heatmap" });
             }} />
             {heatmapVisible ? <p className="layer-note">{copy.map.heatmapDerived}</p> : null}
+            <LayerToggle checked={eventsVisible} label={newsCopy.events.layer} onChange={() => {
+              setEventsVisible((visible) => !visible);
+              setSelectedEventId(undefined);
+            }} />
+            {eventsVisible ? <p className="layer-note">{newsCopy.events.source}{eventPins.length === 0 ? ` ${newsCopy.events.none}` : ""}</p> : null}
             <div className="layer-heading">{copy.map.geography}</div>
             <LayerToggle checked={layers.roads} label={copy.map.roadNetwork} onChange={() => toggleLayer("roads")} />
             <LayerToggle checked={layers.boundaries} label={copy.map.municipalityBoundaries} onChange={() => toggleLayer("boundaries")} />
@@ -686,30 +829,8 @@ export function WorkspaceMap({
 
       <div className="map-dock">
         <div className="legend" aria-label={copy.map.legendAria}>
-          <LegendContent language={language} />
+          <LegendContent language={language} part="terms" />
         </div>
-        {selectedStation ? (
-          <article className="station-detail" aria-live="polite">
-            <div className="station-detail-top">
-              <div>
-                <h3>{selectedStation.name}</h3>
-                <p className="station-district">{localizedDistrict(selectedStation.district, language)}</p>
-              </div>
-              <button aria-label={copy.map.clearSelectedMonitor} className="station-detail-clear" onClick={() => onStationClear("map_detail")} type="button">
-                <XIcon aria-hidden="true" />
-              </button>
-            </div>
-          </article>
-        ) : (
-          <article className="station-detail station-detail-empty" aria-live="polite">
-            <div aria-hidden="true" className="station-empty-icon"><MapPinIcon /></div>
-            <div className="station-empty-copy">
-              <p className="station-detail-eyebrow">{copy.map.stationDetail}</p>
-              <h3>{copy.map.selectStation}</h3>
-              <p>{copy.map.selectStationDescription}</p>
-            </div>
-          </article>
-        )}
       </div>
 
       <dialog
@@ -790,8 +911,10 @@ function KpiCard({ detail, label, networkLabel, share, tone = "good", value }: {
   );
 }
 
-function LegendContent({ language }: { readonly language: Language }) {
+/** `part` lets the map show the colour and map keys over the map and keep the definitions below it. */
+function LegendContent({ language, part = "all" }: { readonly language: Language; readonly part?: "all" | "key" | "terms" }) {
   const copy = getUiCopy(language);
+  const events = getNewsCopy(language).events;
   const termDefinitions = (
     <dl className="legend-terms" aria-label={copy.map.airQualityLevel}>
       <div className="legend-term">
@@ -808,6 +931,7 @@ function LegendContent({ language }: { readonly language: Language }) {
       </div>
     </dl>
   );
+  if (part === "terms") return termDefinitions;
   return (
     <>
       <h3>{copy.map.legendTitle}</h3>
@@ -822,8 +946,9 @@ function LegendContent({ language }: { readonly language: Language }) {
         <span><i className="key-road" />{copy.map.primaryRoad}</span>
         <span><i className="key-transit" />{copy.map.transit}</span>
         <span><i className="key-landmark" />{copy.map.landmark}</span>
+        <span><i className="key-event" />{events.legend}</span>
       </div>
-      {termDefinitions}
+      {part === "all" ? termDefinitions : null}
     </>
   );
 }

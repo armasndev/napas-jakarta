@@ -14,7 +14,7 @@ import {
   SquareIcon,
   XIcon,
 } from "lucide-react";
-import { useCallback, useEffect, useRef, useState, type RefObject } from "react";
+import { Fragment, useCallback, useEffect, useRef, useState, type RefObject } from "react";
 import {
   Conversation,
   ConversationContent,
@@ -44,15 +44,28 @@ import {
   type TopicCopy,
   type TopicOption,
 } from "@/lib/topics";
-import { getSuggestedQuestions } from "@/lib/suggestions";
+import {
+  getContextFallbackSuggestions,
+  getPairSuggestions,
+  getSuggestedQuestions,
+  suggestionPlan,
+} from "@/lib/suggestions";
 import { EN_GUIDE_PATH, ID_GUIDE_PATH } from "@/lib/site";
 import { shouldShowPendingThinking, shouldShowSuggestedQuestions } from "@/lib/chat-state";
 import type { DemoStation } from "@/lib/napas";
 import { PACED_TEXT_START_BUFFER } from "@/lib/paced-text";
 import { MAX_CHAT_CHARACTERS, validateChatInput } from "@/lib/user-input-limits";
+import { CHIP_DRAG_TYPE, parseChipDrop, type ContextChip, type ResolvedContext } from "@/lib/news";
+import { getNewsCopy } from "@/lib/news-copy";
 import { AgentMessage } from "./agent-message";
+import { ChipPills, SentChips } from "./chip-card";
 
 export function AgentChat({
+  attachments,
+  chipMessage,
+  onAttachmentAdd,
+  onAttachmentRemove,
+  onAttachmentsClear,
   language,
   isLegendOpen,
   isMapOpen,
@@ -61,10 +74,14 @@ export function AgentChat({
   onStationClear,
   onStationSelect,
   prefillPrompt,
-  selectedStation,
-  selectedStationId,
+  selectedStations,
   stationOptions,
 }: {
+  readonly attachments: readonly ContextChip[];
+  readonly chipMessage: string;
+  readonly onAttachmentAdd: (chip: ContextChip) => void;
+  readonly onAttachmentRemove: (chip: ContextChip) => void;
+  readonly onAttachmentsClear: () => void;
   readonly language: Language;
   readonly isLegendOpen: boolean;
   readonly isMapOpen: boolean;
@@ -73,8 +90,7 @@ export function AgentChat({
   readonly onStationClear: (source: "map_detail" | "chat_context") => void;
   readonly onStationSelect: (station: DemoStation, source: "map_marker" | "station_list" | "chat_picker") => void;
   readonly prefillPrompt?: { readonly id: number; readonly text: string };
-  readonly selectedStation?: string;
-  readonly selectedStationId?: string;
+  readonly selectedStations: readonly DemoStation[];
   readonly stationOptions: readonly DemoStation[];
 }) {
   const copy = getUiCopy(language);
@@ -84,6 +100,10 @@ export function AgentChat({
   const [hasInputText, setHasInputText] = useState(false);
   const [inputText, setInputText] = useState("");
   const [contextOpen, setContextOpen] = useState(false);
+  // Chips attached to each user message, in order, so the sent bubble can show them.
+  const [sentChips, setSentChips] = useState<readonly (readonly ContextChip[])[]>([]);
+  const [isDragOver, setIsDragOver] = useState(false);
+  const chipCopy = getNewsCopy(language).chips;
   const [selectedTopicId, setSelectedTopicId] = useState<string>();
   const [stationMenuOpen, setStationMenuOpen] = useState(false);
   const [topicMenuOpen, setTopicMenuOpen] = useState(false);
@@ -93,7 +113,20 @@ export function AgentChat({
   const agent = useEveAgent();
   const selectedTopic = findTopic(selectedTopicId);
   const localizedTopic = selectedTopic ? getLocalizedTopicCopy(selectedTopic, language) : undefined;
-  const suggestedQuestions = getSuggestedQuestions(localizedTopic, selectedStation, language);
+  // Suggestions name a station only when exactly one is selected.
+  const plan = suggestionPlan({ attachmentCount: attachments.length, stationCount: selectedStations.length });
+  const generated = useGeneratedSuggestions({
+    enabled: plan === "generate",
+    language,
+    refs: attachments.map(({ id, kind }) => ({ id, kind })),
+    stations: selectedStations.map((station) => station.name),
+  });
+  const suggestedQuestions =
+    plan === "generate"
+      ? generated.questions ?? getContextFallbackSuggestions(language)
+      : selectedStations.length === 2
+        ? getPairSuggestions(selectedStations[0].name, selectedStations[1].name, language)
+        : getSuggestedQuestions(localizedTopic, selectedStations[0]?.name, language);
 
   const isBusy = isSending || agent.status === "submitted" || agent.status === "streaming";
   const isResuming = agent.status === "resuming";
@@ -295,8 +328,8 @@ export function AgentChat({
     onMapToggle();
   };
 
+  // The picker is a multiselect, so it stays open while stations are toggled.
   const handleStationSelect = (station: DemoStation) => {
-    closeStationPicker();
     onStationSelect(station, "chat_picker");
   };
 
@@ -307,8 +340,37 @@ export function AgentChat({
     });
   };
 
+  // Suggested questions fill the composer so the person can edit them before sending.
+  const focusComposer = () => {
+    window.requestAnimationFrame(() => {
+      const input = document.getElementById("napas-composer-input") as HTMLTextAreaElement | null;
+      if (!input) return;
+      input.focus();
+      input.setSelectionRange(input.value.length, input.value.length);
+    });
+  };
+
+  const fillComposer = (prompt: string) => {
+    setInputError(undefined);
+    setInputText(prompt);
+    setHasInputText(prompt.trim().length > 0);
+    focusComposer();
+  };
+
+  const resolveAttachments = async (): Promise<ResolvedContext[]> => {
+    if (attachments.length === 0) return [];
+    const response = await fetch("/api/context/resolve", {
+      body: JSON.stringify({ language, refs: attachments.map(({ id, kind }) => ({ id, kind })) }),
+      headers: { "content-type": "application/json" },
+      method: "POST",
+    });
+    if (!response.ok) throw new Error("context");
+    const payload = (await response.json()) as { items?: ResolvedContext[] };
+    return Array.isArray(payload.items) ? payload.items : [];
+  };
+
   const sendText = async (text: string) => {
-    const normalizedText = text.trim();
+    const normalizedText = text.trim() || (attachments.length > 0 ? chipCopy.defaultQuestion : "");
     if (normalizedText.length === 0 || isResuming) return;
 
     if (validateChatInput(normalizedText)) {
@@ -321,10 +383,30 @@ export function AgentChat({
     setIsSending(true);
 
     try {
-      trackNapasEvent("assistant_question_submitted");
-      await agent.send(normalizedText, buildSendOptions());
+      let attached: ResolvedContext[] = [];
+      try {
+        attached = await resolveAttachments();
+      } catch {
+        setInputError(chipCopy.resolveFailed);
+        return;
+      }
+      // agent.send resolves only when the whole streamed turn ends, so clear the composer now.
+      const sentAttachments = attachments;
       setInputText("");
       setHasInputText(false);
+      setSentChips((current) => [...current, sentAttachments]);
+      onAttachmentsClear();
+      try {
+        trackNapasEvent("assistant_question_submitted");
+        await agent.send(normalizedText, buildSendOptions(attached));
+      } catch (error: unknown) {
+        // Rejected before the turn was accepted: give the question and attachments back.
+        setInputText((current) => current || text);
+        setHasInputText(text.trim().length > 0);
+        setSentChips((current) => current.slice(0, -1));
+        for (const chip of sentAttachments) onAttachmentAdd(chip);
+        setCancellationError(toErrorMessage(error, language));
+      }
     } catch (error: unknown) {
       setCancellationError(toErrorMessage(error, language));
     } finally {
@@ -332,14 +414,14 @@ export function AgentChat({
     }
   };
 
-  const buildSendOptions = () => ({
+  const buildSendOptions = (attached: readonly ResolvedContext[] = []) => ({
     ...(isBusy ? { turnPolicy: "steer" as const } : {}),
-    clientContext: buildNapasClientContext(selectedTopic, selectedStation, language),
+    clientContext: buildNapasClientContext(selectedTopic, selectedStations.map((station) => station.name), language, attached),
   });
 
   const handleSubmit = async (message: PromptInputMessage) => {
     const text = message.text.trim();
-    if (text.length === 0 || isResuming) return;
+    if ((text.length === 0 && attachments.length === 0) || isResuming) return;
     await sendText(text);
   };
 
@@ -357,11 +439,11 @@ export function AgentChat({
           setInputText(event.currentTarget.value);
           setHasInputText(event.currentTarget.value.trim().length > 0);
         }}
-        placeholder={copy.chat.placeholder}
+        placeholder={attachments.length > 0 ? chipCopy.placeholder : copy.chat.placeholder}
         value={inputText}
       />
       <ComposerAction
-        hasInputText={hasInputText}
+        hasInputText={hasInputText || attachments.length > 0}
         isBusy={isBusy}
         isResuming={isResuming}
         language={language}
@@ -374,7 +456,29 @@ export function AgentChat({
     <div
       className="relative flex h-full min-h-0 flex-col overflow-hidden bg-background text-foreground napas-chat-shell"
       data-suggestions-visible={showSuggestedQuestions ? "true" : undefined}
+      onDragLeave={(event) => {
+        if (!event.currentTarget.contains(event.relatedTarget as Node | null)) setIsDragOver(false);
+      }}
+      onDragOver={(event) => {
+        if (!Array.from(event.dataTransfer.types).includes(CHIP_DRAG_TYPE)) return;
+        event.preventDefault();
+        event.dataTransfer.dropEffect = "copy";
+        setIsDragOver(true);
+      }}
+      onDrop={(event) => {
+        const raw = event.dataTransfer.getData(CHIP_DRAG_TYPE);
+        if (!raw) return;
+        event.preventDefault();
+        setIsDragOver(false);
+        const chip = parseChipDrop(raw);
+        if (chip) onAttachmentAdd(chip);
+      }}
     >
+      {isDragOver ? (
+        <div aria-hidden="true" className="chip-drop-overlay">
+          <span>{chipCopy.drop}</span>
+        </div>
+      ) : null}
       <header className="chat-head">
         <div className="chat-title-row">
           <span className="chat-brand-mark" aria-hidden="true">
@@ -426,8 +530,7 @@ export function AgentChat({
               onToggle={toggleStationPicker}
               open={stationMenuOpen}
               pickerRef={stationPickerRef}
-              selectedStation={selectedStation}
-              selectedStationId={selectedStationId}
+              selectedStations={selectedStations}
               stations={stationOptions}
             />
             <div className="napas-topic-picker" ref={topicPickerRef}>
@@ -480,13 +583,19 @@ export function AgentChat({
           {isEmpty ? <EmptyChatState language={language} /> : null}
           {agent.data.messages.map((message, index) =>
             showPendingThinking && message.role === "assistant" && message.id === lastMessage?.id ? null : (
+              <Fragment key={message.id}>
+              {message.role === "user" ? (
+                <SentChips
+                  chips={sentChips[agent.data.messages.slice(0, index).filter((m) => m.role === "user").length] ?? []}
+                  language={language}
+                />
+              ) : null}
               <AgentMessage
                 canRespond={!isBusy && !isResuming}
                 isLatest={index === agent.data.messages.length - 1}
                 isStreaming={
                   agent.status === "streaming" && index === agent.data.messages.length - 1
                 }
-                key={message.id}
                 message={message}
                 language={language}
                 sessionId={telemetrySessionId}
@@ -495,6 +604,7 @@ export function AgentChat({
                   return agent.respond(inputResponses);
                 }}
               />
+              </Fragment>
             ),
           )}
           {showPendingThinking ? <PendingThinking language={language} /> : null}
@@ -518,10 +628,17 @@ export function AgentChat({
           }}
           onTopicOpen={() => openTopicPicker("selected_topic")}
           onContextToggle={() => setContextOpen((open) => !open)}
-          onPrompt={(prompt) => void sendText(prompt)}
+          attachments={attachments}
+          suggestionsLoading={plan === "generate" && generated.status === "loading"}
+          onAttachmentRemove={(chip) => {
+            onAttachmentRemove(chip);
+            // The removed pill disappears, so hand focus to the composer.
+            focusComposer();
+          }}
+          onPrompt={fillComposer}
           language={language}
           selectedTopic={localizedTopic}
-          selectedStation={selectedStation}
+          selectedStations={selectedStations}
           suggestions={suggestedQuestions}
           showSuggestions={showSuggestedQuestions}
         />
@@ -530,10 +647,69 @@ export function AgentChat({
           {inputError}
         </p>
       ) : null}
+      {chipMessage && attachments.length === 0 ? <p className="chip-notice" role="status">{chipMessage}</p> : null}
       <div className="w-full napas-composer-wrap">{composer}</div>
       </div>
     </div>
   );
+}
+
+/**
+ * Questions for an attached article or event, a pin, or more than two stations are generated
+ * by a cheap model call. Debounced and cached per selection; null means "use the fallbacks".
+ */
+function useGeneratedSuggestions({
+  enabled,
+  language,
+  refs,
+  stations,
+}: {
+  readonly enabled: boolean;
+  readonly language: Language;
+  readonly refs: readonly { readonly id: string; readonly kind: string }[];
+  readonly stations: readonly string[];
+}): { readonly questions: readonly string[] | null; readonly status: "idle" | "loading" | "ready" | "failed" } {
+  const [result, setResult] = useState<{ key: string; questions: readonly string[] | null } | null>(null);
+  const cache = useRef(new Map<string, readonly string[]>());
+  const key = JSON.stringify([language, refs, stations]);
+
+  useEffect(() => {
+    if (!enabled) return undefined;
+    const cached = cache.current.get(key);
+    if (cached) {
+      setResult({ key, questions: cached });
+      return undefined;
+    }
+    const controller = new AbortController();
+    const timer = window.setTimeout(() => {
+      fetch("/api/suggestions", {
+        body: JSON.stringify({ language, refs, stations }),
+        headers: { "content-type": "application/json" },
+        method: "POST",
+        signal: controller.signal,
+      })
+        .then((response) => (response.ok ? response.json() : { suggestions: [] }))
+        .then((payload: { suggestions?: string[] }) => {
+          const questions = Array.isArray(payload.suggestions) ? payload.suggestions : [];
+          if (questions.length > 0) cache.current.set(key, questions);
+          setResult({ key, questions: questions.length > 0 ? questions : null });
+        })
+        .catch((error: unknown) => {
+          if ((error as { name?: string }).name !== "AbortError") setResult({ key, questions: null });
+        });
+    }, 700);
+    return () => {
+      window.clearTimeout(timer);
+      controller.abort();
+    };
+    // `key` already encodes language, refs and stations.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [enabled, key]);
+
+  if (!enabled) return { questions: null, status: "idle" };
+  // Anything not yet answered for the current selection shows as loading, including the debounce.
+  if (result?.key !== key) return { questions: null, status: "loading" };
+  return result.questions ? { questions: result.questions, status: "ready" } : { questions: null, status: "failed" };
 }
 
 function EmptyChatState({ language }: { readonly language: Language }) {
@@ -552,19 +728,25 @@ function EmptyChatState({ language }: { readonly language: Language }) {
 }
 
 function ChatUtilityRow({
+  attachments,
+  suggestionsLoading,
   contextOpen,
   isBusy,
   language,
+  onAttachmentRemove,
   onContextToggle,
   onPrompt,
   onStationClear,
   onTopicClear,
   onTopicOpen,
   selectedTopic,
-  selectedStation,
+  selectedStations,
   suggestions,
   showSuggestions,
 }: {
+  readonly attachments: readonly ContextChip[];
+  readonly suggestionsLoading: boolean;
+  readonly onAttachmentRemove: (chip: ContextChip) => void;
   readonly contextOpen: boolean;
   readonly isBusy: boolean;
   readonly language: Language;
@@ -574,15 +756,23 @@ function ChatUtilityRow({
   readonly onTopicClear: () => void;
   readonly onTopicOpen: () => void;
   readonly selectedTopic?: TopicCopy;
-  readonly selectedStation?: string;
+  readonly selectedStations: readonly DemoStation[];
   readonly suggestions: readonly string[];
   readonly showSuggestions: boolean;
 }) {
   const copy = getUiCopy(language);
+  const stationNames = selectedStations.map((station) => station.name);
+  const stationLabel = selectedStations.length === 1 ? stationNames[0] : getNewsCopy(language).stations.count(selectedStations.length);
 
   return (
     <div className="napas-chat-utility-row">
-      {showSuggestions ? (
+      {showSuggestions && suggestionsLoading ? (
+        <div aria-busy="true" aria-label={copy.chat.suggestedQuestions} className="napas-suggestions-overlay" role="status">
+          {[0, 1, 2].map((index) => (
+            <span aria-hidden="true" className="suggestion-skeleton" data-index={index} key={index} />
+          ))}
+        </div>
+      ) : showSuggestions ? (
         <div aria-label={copy.chat.suggestedQuestions} className="napas-suggestions-overlay">
           {suggestions.map((prompt) => (
             <button
@@ -601,6 +791,8 @@ function ChatUtilityRow({
         </div>
       ) : null}
       <div className="napas-context-stack">
+        <ChipPills chips={attachments} language={language} onRemove={onAttachmentRemove} />
+        <div className="napas-context-chip-row">
         {selectedTopic ? (
           <div className="napas-selected-context napas-selected-topic" role="group">
             <button
@@ -625,7 +817,7 @@ function ChatUtilityRow({
           </div>
         ) : null}
         <div className="napas-context-wrap">
-          {selectedStation ? (
+          {selectedStations.length > 0 ? (
             <div className="napas-selected-context napas-selected-location" role="group">
               <button
                 aria-expanded={contextOpen}
@@ -635,7 +827,7 @@ function ChatUtilityRow({
                 type="button"
               >
                 <MapPinIcon aria-hidden="true" className="size-3.5" />
-                <span>{selectedStation}</span>
+                <span>{stationLabel}</span>
                 <small>{copy.chat.selected}</small>
               </button>
               <button
@@ -648,12 +840,13 @@ function ChatUtilityRow({
               </button>
             </div>
           ) : null}
-          {contextOpen && selectedStation ? (
+          {contextOpen && selectedStations.length > 0 ? (
             <div className="napas-context-menu" role="dialog" aria-label={copy.chat.messageContext}>
               <strong>{copy.chat.messageContext}</strong>
-              <span><MapPinIcon aria-hidden="true" className="size-3" />{replaceCopy(copy.chat.includeLocation, { station: selectedStation })}</span>
+              <span><MapPinIcon aria-hidden="true" className="size-3" />{replaceCopy(copy.chat.includeLocation, { station: stationNames.join(", ") })}</span>
             </div>
           ) : null}
+        </div>
         </div>
       </div>
     </div>
@@ -667,8 +860,7 @@ function StationPicker({
   onToggle,
   open,
   pickerRef,
-  selectedStation,
-  selectedStationId,
+  selectedStations,
   stations,
 }: {
   readonly language: Language;
@@ -677,12 +869,11 @@ function StationPicker({
   readonly onToggle: () => void;
   readonly open: boolean;
   readonly pickerRef: RefObject<HTMLDivElement | null>;
-  readonly selectedStation?: string;
-  readonly selectedStationId?: string;
+  readonly selectedStations: readonly DemoStation[];
   readonly stations: readonly DemoStation[];
 }) {
-  const selected = stations.find((station) => station.id === selectedStationId);
   const copy = getUiCopy(language);
+  const count = selectedStations.length;
 
   return (
     <div className="napas-station-picker" ref={pickerRef}>
@@ -695,7 +886,10 @@ function StationPicker({
         type="button"
       >
         <RadioTowerIcon aria-hidden="true" className="size-3.5" />
-        <span>{selected?.name ?? selectedStation ?? copy.chat.station}</span>
+        <span>{copy.chat.station}</span>
+        {count > 0 ? (
+          <span aria-label={getNewsCopy(language).stations.count(count)} className="napas-station-badge">{count}</span>
+        ) : null}
         <ChevronDownIcon aria-hidden="true" className="size-3.5" />
       </button>
       {open ? (
@@ -703,7 +897,7 @@ function StationPicker({
           language={language}
           onClear={onClear}
           onSelect={onSelect}
-          selectedStationId={selectedStationId}
+          selectedStationIds={selectedStations.map((station) => station.id)}
           stations={stations}
         />
       ) : null}
@@ -715,13 +909,13 @@ function StationMenu({
   language,
   onClear,
   onSelect,
-  selectedStationId,
+  selectedStationIds,
   stations,
 }: {
   readonly language: Language;
   readonly onClear: () => void;
   readonly onSelect: (station: DemoStation) => void;
-  readonly selectedStationId?: string;
+  readonly selectedStationIds: readonly string[];
   readonly stations: readonly DemoStation[];
 }) {
   const copy = getUiCopy(language);
@@ -733,7 +927,7 @@ function StationMenu({
           <strong>{copy.chat.chooseStation}</strong>
           <span>{copy.chat.stationMenuDescription}</span>
         </div>
-        {selectedStationId ? (
+        {selectedStationIds.length > 0 ? (
           <button className="napas-station-clear" onClick={onClear} type="button">
             <XIcon aria-hidden="true" className="size-3" />
             {copy.chat.clear}
@@ -742,7 +936,7 @@ function StationMenu({
       </div>
       <div className="napas-station-list">
         {stations.length > 0 ? stations.map((station) => {
-          const isSelected = station.id === selectedStationId;
+          const isSelected = selectedStationIds.includes(station.id);
           return (
             <button
               aria-pressed={isSelected}

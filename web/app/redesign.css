@@ -1,0 +1,930 @@
+/*
+ * Redesign layer (docs/redesign-spec.md). Loaded after globals.css.
+ * Full-bleed workspace, flat hairline surfaces, 4 px corners, chat on the left and a
+ * News / Map / Timeline panel on the right.
+ */
+
+:root {
+  --radius: 0.25rem;
+  --od-bg: #f5f4f0;
+  --od-surface: #ffffff;
+  --od-fg: #15171a;
+  --od-muted: #5b5f66;
+  --od-border: #d4d1c8;
+  --od-radius-panel: 4px;
+  --od-radius-card: 4px;
+  --od-control-radius: 4px;
+  --od-shadow: none;
+  --od-elevation-panel: none;
+  --od-elevation-card: none;
+  --od-elevation-control: none;
+  --rd-line: #bdb9ae;
+  --rd-ink: #15171a;
+  --rd-mono: ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+  --rd-serif: Georgia, "Times New Roman", serif;
+  --rd-red: #8e1b1b;
+  --rd-blue: #1b5e8c;
+}
+
+/* One corner radius for every control and card; areas that must be round opt out below. */
+.napas-od-app :where(*):not(.connection-dot):not(.chip-mark) {
+  border-radius: 4px !important;
+}
+
+/* --- Layout ------------------------------------------------------------ */
+
+/* Full-bleed on desktop: the workspace fills the window under the top bar, with no outer
+   margin, frame, rounded corners or shadow around it. */
+@media (min-width: 981px) {
+  .napas-od-app .workspace {
+    height: calc(100dvh - 56px);
+    margin: 0;
+    border: 0;
+    border-radius: 0;
+    box-shadow: none;
+  }
+}
+
+/* Chat 40%, side panel 60%. */
+.workspace {
+  grid-template-columns: minmax(360px, 2fr) minmax(420px, 3fr);
+}
+
+.side-panel {
+  display: flex;
+  min-width: 0;
+  min-height: 0;
+  flex-direction: column;
+  background: var(--od-surface);
+}
+
+.side-tabs-bar {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 20px;
+  border-bottom: 1px solid var(--od-border);
+}
+
+.side-tabs {
+  display: flex;
+  border: 1px solid var(--rd-line);
+  overflow: hidden;
+}
+
+.napas-od-app .side-tab {
+  min-height: 44px;
+  padding: 0 18px;
+  border: 0;
+  background: var(--od-surface);
+  color: var(--od-fg);
+  font-weight: 600;
+}
+
+.napas-od-app .side-tab + .side-tab {
+  border-left: 1px solid var(--rd-line);
+}
+
+.napas-od-app .side-tab[aria-selected="true"] {
+  background: var(--rd-ink);
+  color: #fff;
+}
+
+.napas-od-app .side-close {
+  display: none;
+  min-width: 44px;
+  min-height: 44px;
+  margin-left: auto;
+  align-items: center;
+  justify-content: center;
+  border: 0;
+  background: transparent;
+  color: var(--od-fg);
+}
+
+.side-panes {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+}
+
+.side-pane {
+  position: absolute;
+  inset: 0;
+  overflow: auto;
+  visibility: hidden;
+}
+
+.side-pane[data-active="true"] {
+  visibility: visible;
+}
+
+/* Map controls set their own visibility, so hide the whole inactive subtree. */
+.side-pane[data-active="false"] * {
+  visibility: hidden !important;
+}
+
+.side-pane > .map-panel {
+  height: 100%;
+}
+
+/* --- Chips --------------------------------------------------------------- */
+
+.sent-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.sent-chips {
+  justify-content: flex-end;
+  margin: 0 0 8px;
+}
+
+.chip-card {
+  display: flex;
+  width: 280px;
+  max-width: 100%;
+  box-sizing: border-box;
+  align-items: flex-start;
+  padding: 10px 0 10px 12px;
+  border: 1px solid #8a8678;
+  background: var(--od-bg);
+  text-align: left;
+}
+
+.sent-chips .chip-card {
+  padding-right: 12px;
+  border-color: var(--rd-line);
+  background: var(--od-surface);
+}
+
+.chip-card[data-unavailable="true"] {
+  border-style: dashed;
+  color: var(--od-muted);
+}
+
+.chip-card-body {
+  display: flex;
+  min-width: 0;
+  flex: 1;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.chip-card-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.chip-mark {
+  width: 9px;
+  height: 9px;
+  flex: none;
+  border-radius: 0;
+  background: var(--rd-ink);
+}
+
+.chip-mark[data-kind="article"] { background: var(--rd-red); }
+.chip-mark[data-kind="station"] { background: #b85c00; }
+.chip-mark[data-kind="event"] { background: var(--rd-red); transform: rotate(45deg); }
+
+.chip-kind {
+  color: var(--od-muted);
+  font-family: var(--rd-mono);
+  font-size: 11px;
+  letter-spacing: 0.06em;
+}
+
+.chip-badge {
+  margin-left: auto;
+  padding: 0 6px;
+  font-family: var(--rd-mono);
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.chip-title {
+  display: -webkit-box;
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.3;
+}
+
+.chip-sub {
+  overflow: hidden;
+  color: var(--od-muted);
+  font-size: 12px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.napas-od-app .chip-remove {
+  display: inline-flex;
+  width: 36px;
+  height: 36px;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  margin: -6px 0 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+}
+
+.chip-remove svg { width: 16px; height: 16px; }
+
+.chip-notice {
+  margin: 0 0 8px;
+  color: var(--rd-red);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.chip-drop-overlay {
+  position: absolute;
+  inset: 8px;
+  z-index: 30;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px dashed var(--rd-ink);
+  background: rgb(245 244 240 / 0.9);
+  pointer-events: none;
+}
+
+.chip-drop-overlay span {
+  padding: 10px 16px;
+  background: var(--rd-ink);
+  color: #fff;
+  font-weight: 600;
+}
+
+/* The message rules in globals.css address `.napas-chat-content > .group`, so sent chips sit
+   beside the messages as siblings (never wrapped) and line up with the user bubble. */
+.napas-od-app .napas-chat-content > .sent-chips { margin: 0 0 8px 42px; }
+
+/* --- News ---------------------------------------------------------------- */
+
+.news-panel,
+.timeline-panel {
+  min-height: 100%;
+}
+
+.news-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 12px;
+  padding: 14px 20px 12px;
+}
+
+.news-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.napas-od-app .news-filter {
+  min-height: 36px;
+  padding: 5px 12px;
+  border: 1px solid var(--rd-line);
+  background: var(--od-surface);
+  color: var(--od-fg);
+  font-size: 13px;
+}
+
+.napas-od-app .news-filter[aria-pressed="true"] {
+  border-color: var(--rd-ink);
+  background: var(--rd-ink);
+  color: #fff;
+  font-weight: 600;
+}
+
+.news-hint {
+  margin: 0 0 0 auto;
+  color: var(--od-muted);
+  font-size: 12px;
+}
+
+.news-demo {
+  margin: 0 20px 8px;
+  padding: 6px 10px;
+  background: #fff4d6;
+  border: 1px solid #c9a100;
+  font-size: 12px;
+}
+
+.news-state {
+  margin: 0;
+  padding: 18px 20px;
+  color: var(--od-muted);
+  font-size: 14px;
+}
+
+.news-list,
+.timeline-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.news-row {
+  display: flex;
+  align-items: stretch;
+  border-top: 1px solid #e4e1d8;
+  background: var(--od-surface);
+}
+
+.news-grip {
+  display: flex;
+  width: 22px;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  color: #6b6759;
+  cursor: grab;
+  font-size: 16px;
+  letter-spacing: -2px;
+}
+
+.news-link {
+  display: block;
+  min-width: 0;
+  flex: 1;
+  padding: 16px 8px 16px 6px;
+  color: inherit;
+  text-decoration: none;
+}
+
+.news-link:hover .news-title { text-decoration: underline; }
+
+.news-meta {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--od-muted);
+  font-family: var(--rd-mono);
+  font-size: 12px;
+}
+
+.news-tag {
+  padding: 2px 7px;
+  background: #e4e1d8;
+  color: var(--od-fg);
+  font-size: 11px;
+  letter-spacing: 0.05em;
+}
+
+.news-tag[data-topic="PROTEST"] { background: var(--rd-red); color: #fff; }
+.news-tag[data-topic="TRAFFIC"],
+.news-tag[data-topic="INCIDENT"] { background: var(--rd-ink); color: #fff; }
+.news-tag[data-topic="HEALTH"],
+.news-tag[data-topic="STUDY"] { background: var(--rd-blue); color: #fff; }
+.news-tag[data-topic="ENVIRONMENT"] { background: #2e7d4f; color: #fff; }
+
+.news-inchat { color: var(--od-fg); font-weight: 500; }
+
+.news-title {
+  display: block;
+  margin-top: 8px;
+  font-family: var(--rd-serif);
+  font-size: 20px;
+  font-weight: 600;
+  line-height: 1.25;
+}
+
+.news-excerpt {
+  display: block;
+  margin-top: 6px;
+  color: #44484f;
+  font-size: 14px;
+  line-height: 1.45;
+}
+
+.napas-od-app .news-add {
+  display: inline-flex;
+  width: 52px;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  border: 0;
+  border-left: 1px solid #e4e1d8;
+  background: transparent;
+  color: var(--od-fg);
+}
+
+.news-add svg { width: 20px; height: 20px; }
+
+/* --- Timeline ------------------------------------------------------------- */
+
+.timeline-head { padding: 18px 24px 6px; }
+.timeline-head h2 { margin: 0; font-family: var(--rd-serif); font-size: 26px; }
+.timeline-head p { margin: 4px 0 0; color: var(--od-muted); font-size: 13px; }
+.timeline-list { padding: 8px 24px 28px; }
+
+.timeline-item {
+  display: grid;
+  grid-template-columns: 112px 1fr;
+  gap: 0 14px;
+}
+
+.timeline-date {
+  padding-top: 16px;
+  color: var(--od-muted);
+  font-family: var(--rd-mono);
+  font-size: 12px;
+  text-align: right;
+}
+
+.timeline-card {
+  margin: 10px 0 12px;
+  padding: 14px 16px;
+  border: 1px solid var(--od-border);
+  background: var(--od-surface);
+}
+
+.timeline-card h3 { margin: 8px 0 0; font-family: var(--rd-serif); font-size: 19px; line-height: 1.25; }
+.timeline-card p { margin: 6px 0 0; color: #44484f; font-size: 14px; }
+.timeline-card .timeline-meta { display: flex; align-items: center; gap: 10px; margin: 0; color: var(--od-muted); font-family: var(--rd-mono); font-size: 12px; }
+.timeline-sources { display: flex; flex-wrap: wrap; gap: 6px 12px; margin: 8px 0 0; padding: 0; list-style: none; font-family: var(--rd-mono); font-size: 12px; }
+
+/* --- Map: events and the pin card ------------------------------------------ */
+
+.napas-od-app .event-marker {
+  position: relative;
+  display: flex;
+  width: 44px;
+  height: 44px;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  cursor: grab;
+}
+
+.event-diamond {
+  width: 22px;
+  height: 22px;
+  border: 2px solid #fff;
+  background: var(--rd-red);
+  transform: rotate(45deg);
+}
+
+.event-marker:focus-visible .event-diamond { outline: 3px solid var(--rd-ink); outline-offset: 3px; }
+
+.event-marker[data-area="true"]::before {
+  position: absolute;
+  width: 96px;
+  height: 96px;
+  border: 2px dashed var(--rd-red);
+  border-radius: 50% !important;
+  background: rgb(142 27 27 / 0.12);
+  content: "";
+  pointer-events: none;
+}
+
+
+.legend-key .key-event { width: 8px; height: 8px; border: 1px solid #fff; background: var(--rd-red); transform: rotate(45deg); }
+.pin-card-kind { color: var(--od-muted); font-family: var(--rd-mono); font-size: 11px; letter-spacing: 0.06em; }
+.pin-card-line { color: #44484f; font-size: 13px; line-height: 1.35; }
+
+.napas-od-app .pin-card-add {
+  min-height: 44px;
+  margin: 0 20px 20px;
+  border: 0;
+  background: var(--rd-ink);
+  color: #fff;
+  font-weight: 600;
+}
+
+.napas-od-app .pin-card-add:disabled { background: #6b6759; opacity: 1; }
+
+/* --- Narrow screens: the side panel becomes a full-screen sheet over the chat --- */
+
+@media (max-width: 980px) {
+  .side-panel { display: none; }
+
+  .workspace[data-mobile-map-open="true"] .side-panel {
+    position: absolute;
+    inset: 0;
+    z-index: 20;
+    display: flex;
+  }
+
+  .napas-od-app .side-close { display: inline-flex; }
+  .side-tabs-bar { padding: 8px 12px; }
+  .napas-od-app .side-tab { padding: 0 12px; }
+  .news-hint { display: none; }
+  .timeline-item { grid-template-columns: 1fr; }
+  .timeline-date { padding: 10px 0 0; text-align: left; }
+
+  .side-pane > .map-panel {
+    position: relative !important;
+    inset: auto !important;
+    display: flex !important;
+    height: 100% !important;
+    min-height: 0 !important;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .side-pane,
+  .chip-card { transition: none !important; }
+}
+
+/* --- No "fingernails": a coloured edge on a rounded card reads as a curved nail. ---
+   Status colour lives in the dot and the numbers; cards keep one even hairline border. */
+
+.napas-od-app .map-kpi {
+  border: 1px solid var(--od-border);
+  box-shadow: none;
+}
+
+.napas-od-app .napas-station-option.is-selected,
+.napas-od-app .napas-topic-option.is-selected {
+  outline: 1px solid var(--rd-ink);
+  outline-offset: -2px;
+}
+
+/* Hover changes colour only: nothing lifts or glows. */
+.napas-od-app :is(.napas-station-trigger, .napas-topic-trigger, .prompt-chip, .napas-selected-context, .napas-station-option, .napas-topic-option):hover {
+  box-shadow: none;
+  transform: none;
+}
+
+.napas-od-app .category-pill { padding: 4px 8px; }
+
+/* --- Map: legend gets the dock to itself; station and event details are an overlay --- */
+
+.napas-od-app .map-dock { grid-template-columns: minmax(0, 1fr); min-height: 0; }
+.napas-od-app .legend { padding: 22px 28px 24px; border-right: 0; }
+.napas-od-app .legend-terms { gap: 14px; margin-top: 18px; padding-top: 18px; }
+
+.napas-od-app .map-stage { --detail-w: min(340px, 46%); }
+
+.detail-overlay {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 7;
+  display: flex;
+  width: var(--detail-w);
+  flex-direction: column;
+  overflow-y: auto;
+  border-left: 1px solid var(--od-border);
+  background: var(--od-surface);
+}
+
+.detail-drag { cursor: grab; }
+
+.detail-photo {
+  display: flex;
+  aspect-ratio: 4 / 3;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  border-bottom: 1px solid var(--od-border);
+  background: #eceae3;
+  color: var(--od-muted);
+  font-size: 13px;
+}
+
+.detail-photo svg { width: 28px; height: 28px; }
+.detail-photo-wrap { position: relative; margin: 0; }
+.detail-photo { position: relative; overflow: hidden; }
+.detail-photo-img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+.detail-photo-credit { position: absolute; right: 0; bottom: 0; left: 0; padding: 4px 10px; background: rgb(21 23 26 / 0.7); color: #fff; font-size: 11px; }
+.detail-head { padding: 16px 20px 0; }
+.detail-title { margin: 4px 20px 0; font-size: 20px; line-height: 1.25; }
+.detail-drag .station-district { margin: 2px 20px 0; }
+
+.napas-od-app .detail-close {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  z-index: 2;
+  display: inline-flex;
+  width: 44px;
+  height: 44px;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--rd-line);
+  background: var(--od-surface);
+  color: var(--od-fg);
+}
+
+.detail-content {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 16px 20px;
+}
+
+.detail-content .detail-metrics { gap: 32px; }
+.detail-content .station-detail-note { margin: 0; }
+
+/* Keep the zoom controls, layer menu and map attribution clear of the overlay. */
+.napas-od-app .map-stage[data-detail="open"] .map-controls { right: calc(var(--detail-w) + 18px); }
+.napas-od-app .map-stage[data-detail="open"] .layers-menu { right: calc(var(--detail-w) + 69px); }
+.napas-od-app .map-stage[data-detail="open"] .maplibregl-ctrl-bottom-right { right: var(--detail-w); }
+
+@media (max-width: 980px) {
+  /* On narrow screens the details are a bottom sheet over the map. */
+  .detail-overlay {
+    top: auto;
+    left: 0;
+    width: auto;
+    max-height: 62%;
+    border-top: 1px solid var(--od-border);
+    border-left: 0;
+  }
+
+  /* Compact sheet: a small photo beside the name, readings in a wrapped row, one button. */
+  .detail-overlay { max-height: 46%; }
+  .detail-drag {
+    display: grid;
+    grid-template-columns: 72px minmax(0, 1fr);
+    column-gap: 12px;
+    align-items: start;
+    padding: 12px 56px 0 12px;
+  }
+  .detail-photo-wrap { grid-row: 1 / span 3; }
+  .detail-photo { aspect-ratio: 1 / 1; border: 1px solid var(--od-border); }
+  .detail-photo span { display: none; }
+  .detail-head { padding: 0; }
+  .detail-title { margin: 2px 0 0; font-size: 16px; }
+  .detail-drag .station-district { margin: 2px 0 0; }
+  .napas-od-app .detail-close { top: 4px; right: 4px; }
+  .detail-content { flex-flow: row wrap; align-items: center; gap: 8px 16px; padding: 10px 12px; }
+  .detail-content .station-detail-note { display: none; }
+  .detail-content .detail-metrics { gap: 20px; }
+  .detail-content .detail-metric strong { font-size: 22px; }
+  .napas-od-app .pin-card-add { margin: 0 12px 12px; }
+  .napas-od-app .map-stage[data-detail="open"] .map-controls { right: 18px; }
+  .napas-od-app .map-stage[data-detail="open"] .layers-menu { right: 69px; }
+  .napas-od-app .map-stage[data-detail="open"] .maplibregl-ctrl-bottom-right { right: 0; }
+}
+
+/* --- Legend definitions: plain text columns, never clipped, no boxes --- */
+
+.napas-od-app .map-dock { height: auto; max-height: none; min-height: 0; }
+.napas-od-app .legend { overflow: visible; }
+.napas-od-app .map-stage { min-height: 300px; }
+/* If the window is short, the map panel scrolls rather than cutting the legend off. */
+.napas-od-app .side-pane > .map-panel { overflow-y: auto; }
+
+.napas-od-app .legend-terms {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px 36px;
+  margin-top: 18px;
+  padding-top: 18px;
+  border-top: 1px solid var(--od-border);
+}
+
+.napas-od-app .legend-term {
+  padding: 0;
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+.napas-od-app .legend-term dt { font-size: 12px; letter-spacing: 0.06em; }
+.napas-od-app .legend-term dd { margin: 4px 0 0; color: var(--od-muted); font-size: 13px; line-height: 1.5; }
+
+@media (max-width: 1150px) {
+  .napas-od-app .legend-terms { grid-template-columns: minmax(0, 1fr); gap: 12px; }
+}
+
+/* The colour and map keys sit on the map surface; definitions stay in the dock below. */
+.map-legend-overlay {
+  position: absolute;
+  top: 16px;
+  left: 16px;
+  z-index: 5;
+  width: max-content;
+  max-width: calc(100% - 32px);
+  padding: 12px 16px 14px;
+  border: 1px solid var(--od-border);
+  background: rgb(255 255 255 / 0.94);
+}
+
+.map-legend-overlay h3 { margin: 0 0 8px; font-size: 11px; letter-spacing: 0.06em; text-transform: uppercase; }
+.map-legend-overlay .legend-grid { display: grid; grid-template-columns: repeat(2, max-content); gap: 6px 22px; margin: 0; }
+.map-legend-overlay .legend-key { display: grid; grid-template-columns: repeat(2, max-content); gap: 6px 22px; margin: 12px 0 0; padding-top: 12px; border-top: 1px solid var(--od-border); }
+
+/* Narrow screens use the legend dialog instead, so the map stays clear. */
+@media (max-width: 980px) {
+  .map-legend-overlay { display: none; }
+}
+
+/* --- Chat panel: station badge, taller composer, no fade over the scroll --- */
+
+.napas-od-app .napas-station-badge {
+  min-width: 18px;
+  padding: 0 5px;
+  background: var(--rd-ink);
+  color: #fff;
+  font: 600 11px/18px var(--rd-mono);
+  text-align: center;
+}
+
+/* The composer dock is a normal block under the scroll area, not an overlay with a fade. */
+.napas-od-app .napas-chat-dock {
+  position: relative;
+  right: auto;
+  bottom: auto;
+  left: auto;
+  z-index: auto;
+  padding: 14px 24px calc(18px + env(safe-area-inset-bottom)) !important;
+  border-top: 1px solid var(--od-border);
+  background: var(--od-surface);
+}
+
+.napas-od-app .napas-chat-content { padding-bottom: 28px !important; }
+.napas-od-app .napas-chat-scroll { scroll-padding-bottom: 0; }
+
+/* A taller composer, with the send button at the bottom corner. */
+.napas-od-app .napas-composer-wrap .napas-prompt-textarea {
+  min-height: 92px !important;
+  max-height: 240px;
+}
+
+.napas-od-app .napas-composer-wrap [data-slot="input-group"] > .napas-send-action {
+  top: auto;
+  bottom: 10px;
+  transform: none;
+}
+
+.napas-od-app .napas-composer-wrap [data-slot="input-group"] > .napas-send-action:hover,
+.napas-od-app .napas-composer-wrap [data-slot="input-group"] > .napas-send-action:active {
+  transform: none;
+}
+
+@media (max-width: 980px) {
+  .napas-od-app .napas-chat-dock { padding: 10px 14px calc(12px + env(safe-area-inset-bottom)) !important; }
+  .napas-od-app .napas-composer-wrap .napas-prompt-textarea { min-height: 76px !important; }
+}
+
+/* --- Motion: short, purposeful, and off for people who ask for less --- */
+
+@keyframes rd-chip-in { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
+@keyframes rd-slide-in-right { from { opacity: 0; transform: translateX(16px); } to { opacity: 1; transform: none; } }
+@keyframes rd-slide-in-up { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: none; } }
+
+.chip-pill { animation: rd-chip-in 140ms ease-out; }
+.detail-overlay { animation: rd-slide-in-right 180ms cubic-bezier(0.2, 0.8, 0.2, 1); }
+
+@media (max-width: 980px) {
+  .detail-overlay { animation-name: rd-slide-in-up; }
+}
+
+.side-pane { transition: opacity 120ms ease-out, visibility 0s linear 120ms; opacity: 0; }
+.side-pane[data-active="true"] { opacity: 1; transition: opacity 120ms ease-out, visibility 0s; }
+
+.napas-od-app .news-row { transition: background-color 100ms ease-out; }
+.napas-od-app .news-row:hover { background: var(--od-bg); }
+
+@media (prefers-reduced-motion: reduce) {
+  .chip-pill,
+  .detail-overlay { animation: none; }
+  .side-pane,
+  .napas-od-app .news-row { transition: none; }
+}
+
+/* --- Attachments: compact pills, same height as the suggested questions --- */
+
+.napas-attach-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 7px;
+  min-width: 0;
+}
+
+.chip-pill {
+  display: inline-flex;
+  box-sizing: border-box;
+  min-height: 36px;
+  max-width: 100%;
+  align-items: center;
+  gap: 8px;
+  padding: 0 0 0 12px;
+  border: 1px solid #8a8678;
+  background: var(--od-bg);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.chip-pill-title {
+  min-width: 0;
+  max-width: 240px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.napas-od-app .chip-pill .chip-remove { width: 34px; height: 34px; margin: 0; }
+
+/* The context stack stays visible on small screens when attachments are present. */
+.napas-chat-utility-row:has(.napas-attach-row) .napas-context-stack { display: flex; }
+
+/* Room for the attachment pills above the selected-station chip. */
+.napas-od-app .napas-context-stack {
+  flex: 0 1 300px;
+  min-width: 220px;
+  flex-direction: column;
+  align-items: flex-end;
+}
+
+.napas-od-app .napas-attach-row { justify-content: flex-end; width: 100%; }
+
+/* Attachments: one pill keeps its label; two or more are capped at half the row so two sit
+   side by side, without labels, and there are never more than two rows (the cap is four). */
+.napas-od-app .napas-attach-row {
+  flex-wrap: wrap;
+  max-height: 79px;
+  overflow: hidden;
+}
+
+.napas-od-app .napas-attach-row[data-multi="true"] .chip-pill {
+  flex: 0 0 calc(50% - 3.5px);
+  width: calc(50% - 3.5px);
+  max-width: calc(50% - 3.5px);
+  padding-left: 10px;
+  gap: 6px;
+}
+
+.napas-od-app .napas-attach-row .chip-pill-title { flex: 1; min-width: 0; max-width: none; }
+
+/* Loading state for generated suggestions. */
+.suggestion-skeleton {
+  display: block;
+  height: 36px;
+  border: 1px solid var(--od-border);
+  background: var(--od-bg);
+  animation: rd-pulse 1.1s ease-in-out infinite;
+}
+
+.suggestion-skeleton[data-index="0"] { width: 78%; }
+.suggestion-skeleton[data-index="1"] { width: 58%; animation-delay: 0.15s; }
+.suggestion-skeleton[data-index="2"] { width: 68%; animation-delay: 0.3s; }
+
+@keyframes rd-pulse { 0%, 100% { opacity: 0.45; } 50% { opacity: 1; } }
+
+@media (prefers-reduced-motion: reduce) {
+  .suggestion-skeleton { animation: none; opacity: 0.7; }
+}
+
+/* --- The panel above the composer is capped at the height of the three suggestions --- */
+
+.napas-od-app .napas-context-chip-row {
+  display: flex;
+  min-width: 0;
+  max-width: 100%;
+  justify-content: flex-end;
+  gap: 7px;
+}
+
+.napas-od-app .napas-context-chip-row > * { min-width: 0; }
+.napas-od-app .napas-context-chip-row .napas-context-main span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+@media (min-width: 981px) {
+  /* 3 questions x 36px + 2 gaps x 7px. Questions stay on one line so this never grows. */
+  .napas-od-app .napas-chat-utility-row { max-height: 122px; }
+  .napas-od-app .napas-suggestions-overlay {
+    flex: 1 1 0;
+    min-width: 0;
+    flex-direction: column;
+    align-items: flex-start;
+    flex-wrap: nowrap;
+    gap: 7px;
+  }
+
+  .napas-od-app .napas-suggestions-overlay .prompt-chip {
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  /* Right column: the 2x2 attachment grid with the selected stations right underneath. */
+  .napas-od-app .napas-context-stack {
+    flex: 0 0 300px;
+    justify-content: flex-end;
+    gap: 7px;
+  }
+
+  .napas-od-app .napas-attach-row { gap: 7px; }
+  .napas-od-app .suggestion-skeleton { width: 100% !important; max-width: 420px; }
+}

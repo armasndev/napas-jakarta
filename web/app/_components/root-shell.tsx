@@ -4,6 +4,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { AnalyticsConsent } from "@/app/_components/analytics-consent";
 import { SiteSchema } from "@/app/_components/site-schema";
 import "@/app/globals.css";
+import "@/app/redesign.css";
 
 export function RootShell({ children, lang }: { readonly children: ReactNode; readonly lang: "en" | "id" }) {
   return (
