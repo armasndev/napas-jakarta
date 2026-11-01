@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import csv
+import json
 import re
 from pathlib import Path
 
@@ -51,6 +52,31 @@ def load_stations(path: str | Path = "data/demo/stations.csv") -> list[dict]:
             {**row, "latitude": float(row["latitude"]), "longitude": float(row["longitude"])}
             for row in csv.DictReader(handle)
         ]
+
+
+def load_station_photos(path: str | Path = "data/station_photos.json") -> dict[str, dict[str, str]]:
+    """Optional curated photos of monitor sites: {station_id: {"url": https URL, "credit": text}}.
+
+    A photo only needs an https URL; anything else is ignored so a bad entry cannot
+    put a non-web link or an oversized string in the station catalog.
+    """
+    try:
+        raw = json.loads(Path(path).read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return {}
+    photos: dict[str, dict[str, str]] = {}
+    for station_id, entry in (raw.items() if isinstance(raw, dict) else []):
+        if station_id.startswith("_"):
+            continue
+        entry = {"url": entry} if isinstance(entry, str) else entry
+        url = entry.get("url") if isinstance(entry, dict) else None
+        if isinstance(url, str) and url.startswith("https://") and len(url) <= 500:
+            credit = entry.get("credit")
+            photos[str(station_id)] = {
+                "url": url,
+                "credit": credit[:120] if isinstance(credit, str) else "",
+            }
+    return photos
 
 
 def load_runtime_stations(

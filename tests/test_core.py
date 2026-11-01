@@ -231,6 +231,8 @@ def test_station_catalog_preserves_coordinates_and_missing_observations():
             "source": "https://udara.jakarta.go.id/",
             "source_url": "https://udara.jakarta.go.id/",
             "freshness": {"status": "stale"},
+            "photo_url": None,
+            "photo_credit": None,
         },
         {
             "id": "s2",
@@ -245,6 +247,8 @@ def test_station_catalog_preserves_coordinates_and_missing_observations():
             "source": "https://udara.jakarta.go.id/",
             "source_url": "https://udara.jakarta.go.id/",
             "freshness": None,
+            "photo_url": None,
+            "photo_credit": None,
         },
     ]
 

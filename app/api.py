@@ -18,6 +18,7 @@ from monitoring.structured import emit_exception, emit_log
 
 from .config import build_metadata, selected_retrieval_mode
 from .evidence import compare_study_findings, get_source_apportionment
+from .news import LANGUAGES, MAX_REFS, NewsStore, load_timeline, query_timeline, resolve_refs
 from .policy import get_policy_status, get_policy_timeline
 from .provenance import source_manifest
 from .provider import selected_prompt_variant, selected_prompt_version
@@ -29,7 +30,12 @@ from .security import (
     enforce_rate_limit,
     require_internal_token,
 )
-from .stations import display_district_name, display_station_name, load_runtime_stations
+from .stations import (
+    display_district_name,
+    display_station_name,
+    load_runtime_stations,
+    load_station_photos,
+)
 from .tools import (
     compare_locations,
     compare_measurement_with_standard,
@@ -44,6 +50,10 @@ ROOT = Path(__file__).parents[1]
 RUNTIME = RuntimeRepository(os.getenv("DATA_DIR", ROOT / "data"), os.getenv("POSTGRES_DSN", ""))
 DOCUMENTS = RUNTIME.documents()
 MEASUREMENTS = RUNTIME.measurements(force=True)
+_DATA_DIR = Path(os.getenv("DATA_DIR", ROOT / "data"))
+NEWS = NewsStore(os.getenv("POSTGRES_DSN", ""), os.getenv("NEWS_DEMO_FILE") or _DATA_DIR / "demo" / "news_items.json")
+TIMELINE = load_timeline(_DATA_DIR / "timeline.json")
+STATION_PHOTOS = load_station_photos(_DATA_DIR / "station_photos.json")
 app = FastAPI(title="Napas Jakarta API", version=build_metadata()["app_version"])
 
 _USER_INPUT_WORD_RE = re.compile(r"[\w]+(?:[.'’\-][\w]+)*", re.UNICODE)
@@ -149,7 +159,10 @@ def _public_station_category(
 
 
 def build_station_catalog(
-    station_records: list[dict], latest_rows: list[dict], source_mode: str
+    station_records: list[dict],
+    latest_rows: list[dict],
+    source_mode: str,
+    photos: dict[str, dict[str, str]] | None = None,
 ) -> dict[str, Any]:
     """Join station coordinates with the latest observation for map consumers."""
     latest_by_id = {str(row["station_id"]): row for row in latest_rows}
@@ -181,6 +194,8 @@ def build_station_catalog(
                 "source": source,
                 "source_url": source_url,
                 "freshness": (observation or {}).get("freshness"),
+                "photo_url": (photos or {}).get(station_id, {}).get("url"),
+                "photo_credit": (photos or {}).get(station_id, {}).get("credit") or None,
             }
         )
 
@@ -461,6 +476,7 @@ def stations(pollutant: str = "PM2.5") -> dict[str, Any]:
         station_records,
         get_latest_measurements(MEASUREMENTS, pollutant=pollutant),
         _source_manifest()["mode"],
+        STATION_PHOTOS,
     )
 
 
@@ -621,3 +637,88 @@ def chat_telemetry(
         }
     )
     return {"status": "recorded", "interaction_id": request.interaction_id}
+
+
+# --- News, reported events, curated timeline and chat-context resolution ---
+
+Language = Literal["en", "id"]
+BoundedQuery = Annotated[StrictStr, Field(min_length=2, max_length=300)]
+
+
+class NewsSearchRequest(BaseModel):
+    query: BoundedQuery
+    language: Language = "en"
+    limit: int = Field(default=5, ge=1, le=10)
+
+
+class ContextRef(BaseModel):
+    kind: Literal["article", "event", "station"]
+    id: Annotated[StrictStr, Field(min_length=1, max_length=120, pattern=r"^[A-Za-z0-9._:-]+$")]
+
+
+class ContextResolveRequest(BaseModel):
+    refs: list[ContextRef] = Field(max_length=MAX_REFS)
+    language: Language = "en"
+
+
+class TimelineQueryRequest(BaseModel):
+    language: Language = "en"
+    text: Annotated[StrictStr, Field(max_length=200)] | None = None
+    category: Annotated[StrictStr, Field(max_length=40)] | None = None
+    start: Annotated[StrictStr, Field(max_length=32)] | None = None
+    end: Annotated[StrictStr, Field(max_length=32)] | None = None
+    limit: int = Field(default=10, ge=1, le=50)
+
+
+def _news_lang(language: str) -> str:
+    return language if language in LANGUAGES else "en"
+
+
+@app.get("/news", dependencies=[Depends(require_internal_token)])
+def news_list(language: str = "en", topic: str | None = None, limit: int = 50) -> dict[str, Any]:
+    items = NEWS.list_items(_news_lang(language), topic, limit)
+    return {"items": items, "language": _news_lang(language), "source_mode": NEWS.source_mode}
+
+
+@app.get("/news/{item_id}", dependencies=[Depends(require_internal_token)])
+def news_item(item_id: str) -> dict[str, Any]:
+    item = NEWS.get(item_id)
+    if item is None:
+        raise HTTPException(status_code=404, detail="News item not found")
+    return item
+
+
+@app.post("/news/search", dependencies=[Depends(require_internal_token)])
+def news_search(request: NewsSearchRequest) -> dict[str, Any]:
+    return {
+        "results": NEWS.search(request.query, request.language, request.limit),
+        "language": request.language,
+        "source_mode": NEWS.source_mode,
+    }
+
+
+@app.get("/events", dependencies=[Depends(require_internal_token)])
+def news_events(language: str = "en") -> dict[str, Any]:
+    return {"events": NEWS.events(_news_lang(language)), "source_mode": NEWS.source_mode}
+
+
+@app.post("/context/resolve", dependencies=[Depends(require_internal_token)])
+def context_resolve(request: ContextResolveRequest) -> dict[str, Any]:
+    station_rows = stations()["stations"]
+    refs = [ref.model_dump() for ref in request.refs]
+    return {"items": resolve_refs(refs, NEWS, request.language, station_rows)}
+
+
+@app.get("/timeline", dependencies=[Depends(require_internal_token)])
+def timeline_list(language: str = "en", category: str | None = None) -> dict[str, Any]:
+    entries = query_timeline(TIMELINE, _news_lang(language), category=category, limit=50)
+    return {"entries": entries, "curated": True}
+
+
+@app.post("/timeline/query", dependencies=[Depends(require_internal_token)])
+def timeline_query(request: TimelineQueryRequest) -> dict[str, Any]:
+    entries = query_timeline(
+        TIMELINE, request.language, request.category, request.text,
+        request.start, request.end, request.limit,
+    )
+    return {"entries": entries, "curated": True}
