@@ -6,10 +6,10 @@ import type { Language } from "@/lib/i18n";
 import type { ContextChip } from "@/lib/news";
 import { getNewsCopy } from "@/lib/news-copy";
 import { NewsPanel } from "./news-panel";
-import { TimelinePanel } from "./timeline-panel";
 
 export type PanelTab = "news" | "map" | "timeline";
-const TABS: readonly PanelTab[] = ["news", "map", "timeline"];
+// shortcut: the Timeline tab is hidden until data/timeline.json holds real entries; add "timeline" back here and in the panes below.
+const TABS: readonly PanelTab[] = ["news", "map"];
 
 /**
  * Right-hand panel: News, Map and Timeline tabs next to the always-present chat.
@@ -91,7 +91,6 @@ export function SidePanel({
       <div className="side-panes">
         {pane("news", <NewsPanel attachedKeys={attachedKeys} language={language} onAdd={onChipAdd} />)}
         {pane("map", map)}
-        {pane("timeline", <TimelinePanel language={language} />)}
       </div>
     </aside>
   );
