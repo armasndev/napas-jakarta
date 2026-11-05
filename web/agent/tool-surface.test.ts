@@ -16,9 +16,7 @@ test("the grounded retrieval tools are present in the authored Eve surface", asy
     "get-current-air-quality.ts",
     "get-evidence-findings.ts",
     "get-policy-status.ts",
-    "get-timeline.ts",
     "search-grounded-guidance.ts",
-    "search-news.ts",
   ];
 
   for (const toolName of toolNames) {
@@ -26,15 +24,4 @@ test("the grounded retrieval tools are present in the authored Eve surface", asy
     const source = await readFile(new URL(`./tools/${toolName}`, import.meta.url), "utf8");
     assert.match(source, /fetchNapasJson|fetchSourceManifest/);
   }
-});
-
-test("news and timeline stay out of the guidance tool and its corpus", async () => {
-  const guidance = await readFile(new URL("./tools/search-grounded-guidance.ts", import.meta.url), "utf8");
-  assert.doesNotMatch(guidance, /\/news|\/timeline/);
-
-  const news = await readFile(new URL("./tools/search-news.ts", import.meta.url), "utf8");
-  const timeline = await readFile(new URL("./tools/get-timeline.ts", import.meta.url), "utf8");
-  assert.match(news, /\/news\/search/);
-  assert.match(timeline, /\/timeline\/query/);
-  assert.doesNotMatch(`${news}${timeline}`, /\/guidance\/search/);
 });

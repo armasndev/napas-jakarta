@@ -31,28 +31,16 @@ export const TOPIC_CATALOG = topicCatalog as TopicCatalog;
 export const TOPIC_GROUPS = TOPIC_CATALOG.groups;
 export const TOPIC_SOURCE_LABELS = TOPIC_CATALOG.sourceLabels;
 
-export type AttachedContext = {
-  readonly kind: string;
-  readonly id: string;
-  readonly available: boolean;
-  readonly title: string;
-  readonly text: string;
-};
-
 export type NapasClientContext = {
   readonly napas: {
     readonly language: Language;
-    /** Stored records for chips the person attached, resolved server-side. Untrusted data. */
-    readonly attached: readonly AttachedContext[];
     readonly selectedTopic: {
       readonly id: string;
       readonly label: string;
       readonly sourceIds: readonly string[];
       readonly reviewStatus?: string;
     } | null;
-    /** The most recently selected station, kept for older prompts. */
     readonly selectedStation: string | null;
-    readonly selectedStations: readonly string[];
   };
 };
 
@@ -80,16 +68,14 @@ export function findTopic(topicId: string | undefined): TopicOption | undefined 
 
 export function buildNapasClientContext(
   selectedTopic: TopicOption | undefined,
-  selectedStations: readonly string[],
+  selectedStation: string | undefined,
   language: Language = "en",
-  attached: readonly AttachedContext[] = [],
 ): NapasClientContext {
   const localizedTopic = selectedTopic ? getLocalizedTopicCopy(selectedTopic, language) : undefined;
 
   return {
     napas: {
       language,
-      attached: attached.map(({ available, id, kind, text, title }) => ({ available, id, kind, text, title })),
       selectedTopic: selectedTopic
         ? {
             id: selectedTopic.id,
@@ -98,8 +84,7 @@ export function buildNapasClientContext(
             ...(selectedTopic.reviewStatus ? { reviewStatus: selectedTopic.reviewStatus } : {}),
           }
         : null,
-      selectedStation: selectedStations.at(-1) ?? null,
-      selectedStations: [...selectedStations],
+      selectedStation: selectedStation ?? null,
     },
   };
 }

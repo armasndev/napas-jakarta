@@ -67,16 +67,6 @@ Railway's production-shaped topology has four optional pieces:
    observations when configured and applies interaction retention cleanup for
    either PostgreSQL or the strict-$0 JSONL fallback.
 
-5. **News** (optional, not deployed yet) is a second cron service using `railway-news-cron.toml`
-   (`0 * * * *`, hourly). It polls the curated feeds in `data/news_sources.json`, makes one
-   LLM call per new item, geocodes located events, and writes `news_items` in PostgreSQL.
-   It needs `POSTGRES_DSN`, and optionally `NEWS_LLM_API_KEY` (a key separate from the chat
-   key), `NEWS_LLM_MODEL`, and `GOOGLE_MAPS_API_KEY` (restricted to the Geocoding API, with a
-   billing budget alert). Without the LLM key items are stored as plain articles; without the
-   Maps key events are not pinned. With no sources listed it does nothing. The API serves the
-   data at `/news`, `/events`, `/timeline` and `/context/resolve` (internal token required).
-   Until PostgreSQL holds news, the API serves a clearly marked demo fixture.
-
 Qdrant and Grafana are deliberately local-Compose services. Production uses the
 configured in-process `hybrid` retrieval method and the built-in aggregate
 Monitoring page, so they are not required by the Railway deployment.
