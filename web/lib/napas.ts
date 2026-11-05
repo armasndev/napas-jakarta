@@ -10,8 +10,6 @@ export type DemoStation = {
   observedAt: string;
   source: string;
   sourceUrl?: string | null;
-  photoUrl?: string | null;
-  photoCredit?: string | null;
   latitude: number;
   longitude: number;
   // Derived PM2.5 AQI. Optional because the bundled demo stations carry no AQI.
@@ -35,8 +33,6 @@ export type StationCatalogRow = {
   observed_at: string | null;
   source: string;
   source_url: string | null;
-  photo_url?: string | null;
-  photo_credit?: string | null;
   freshness: Record<string, unknown> | null;
   aqi: number | null;
   aqi_category: string | null;

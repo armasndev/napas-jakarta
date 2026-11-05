@@ -34,14 +34,6 @@ source, and abstain when the required evidence is unavailable.
 - Detailed planning files under `.codex-dev/plans/` are historical working
   notes. This file is the high-level state reference.
 
-## In progress, not deployed
-
-The redesign on branch `feat/redesign` (spec: `docs/redesign-spec.md`) adds a tabbed
-News / Map / Timeline panel beside the chat, article and pin chips that attach context to a
-message, a curated timeline, and an hourly news job (`railway-news-cron.toml`). None of it is
-in production. The news job needs a new Railway cron service, a separate LLM key and a Google
-Maps Geocoding key before it can run; until then the API serves labelled demo data.
-
 ## Production deployment
 
 Production runs in Railway under one project and environment with these

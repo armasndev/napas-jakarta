@@ -1,4 +1,0 @@
-{
-  "_note": "Optional curated photos of monitor sites. Add \"STATION_ID\": {\"url\": \"https://...\", \"credit\": \"Photographer or source\"}. Only https URLs are used.",
-  "_example": {"url": "https://example.com/photo.jpg", "credit": "Photographer"}
-}
