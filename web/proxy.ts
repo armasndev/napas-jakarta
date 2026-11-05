@@ -6,7 +6,22 @@ import { validateEveRequestPayload } from "@/lib/user-input-limits";
 const MAX_CHAT_REQUEST_BYTES = 32_000;
 const EVE_TURN_PATH = /^\/eve\/v1\/session(?:\/[^/]+)?$/u;
 
+// Dev-only gate: when DEV_ACCESS_PASSWORD is set, every page needs HTTP basic auth (any username).
+function devGate(request: NextRequest): NextResponse | undefined {
+  const password = process.env.DEV_ACCESS_PASSWORD;
+  if (!password) return undefined;
+  const supplied = atob((request.headers.get("authorization") ?? "").replace(/^Basic /u, "") || "Og==");
+  if (supplied.slice(supplied.indexOf(":") + 1) === password) return undefined;
+  return new NextResponse("Password required.", {
+    headers: { "Cache-Control": "no-store", "WWW-Authenticate": 'Basic realm="Napas dev"' },
+    status: 401,
+  });
+}
+
 export async function proxy(request: NextRequest) {
+  const denied = devGate(request);
+  if (denied) return denied;
+
   const routerHost = process.env.VERCEL_URL;
   const forwardedHost = request.headers.get("x-forwarded-host");
   if (process.env.__VERCEL_DEV_RUNNING === "1" && routerHost && forwardedHost !== routerHost) {
@@ -74,5 +89,6 @@ export async function proxy(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/eve/v1/:path*"],
+  // Health stays open for Railway; everything else passes through the dev gate.
+  matcher: ["/((?!api/health|_next/static|_next/image).*)"],
 };
