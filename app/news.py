@@ -3,7 +3,7 @@
 News is event context, never air-quality evidence: it lives in its own table and
 is never added to the guidance corpus (see docs/redesign-spec.md, 5d). With no
 database configured the store serves a clearly marked demo fixture so the UI can
-be reviewed locally.
+be reviewed locally. The table is created by Alembic (``migrations/``).
 """
 
 from __future__ import annotations
@@ -25,33 +25,6 @@ RESOLVED_TOTAL_LIMIT = 4_800
 MAX_REFS = 4
 LANGUAGES = {"en", "id"}
 TOPICS = {"PROTEST", "TRAFFIC", "POLICY", "HEALTH", "ENVIRONMENT", "OTHER"}
-
-NEWS_SCHEMA = """
-CREATE TABLE IF NOT EXISTS news_items (
-  id TEXT PRIMARY KEY,
-  lang TEXT NOT NULL,
-  outlet TEXT NOT NULL,
-  source TEXT NOT NULL,
-  title TEXT NOT NULL,
-  url TEXT NOT NULL UNIQUE,
-  excerpt TEXT NOT NULL DEFAULT '',
-  topic TEXT NOT NULL DEFAULT 'OTHER',
-  published_at TIMESTAMPTZ NOT NULL,
-  fetched_at TIMESTAMPTZ NOT NULL DEFAULT now(),
-  is_event BOOLEAN NOT NULL DEFAULT FALSE,
-  location_text TEXT,
-  lat DOUBLE PRECISION,
-  lng DOUBLE PRECISION,
-  place_id TEXT,
-  location_precision TEXT,
-  event_start TIMESTAMPTZ,
-  event_end TIMESTAMPTZ,
-  status TEXT NOT NULL DEFAULT 'unknown',
-  relevant BOOLEAN NOT NULL DEFAULT TRUE
-);
-ALTER TABLE news_items ADD COLUMN IF NOT EXISTS relevant BOOLEAN NOT NULL DEFAULT TRUE;
-CREATE INDEX IF NOT EXISTS news_items_lang_published ON news_items (lang, published_at DESC);
-"""
 
 _COLUMNS = (
     "id", "lang", "outlet", "source", "title", "url", "excerpt", "topic", "published_at",
@@ -106,7 +79,6 @@ def upsert_news(items: list[dict[str, Any]], dsn: str) -> int:
     )
     try:
         with psycopg.connect(dsn) as connection:
-            connection.execute(NEWS_SCHEMA)
             for item in items:
                 values = {c: item.get(c) for c in _COLUMNS}
                 values["relevant"] = True if values["relevant"] is None else values["relevant"]
@@ -123,7 +95,6 @@ def purge_news(dsn: str, days: int = RETENTION_DAYS) -> int:
     cutoff = _now() - timedelta(days=days)
     try:
         with psycopg.connect(dsn) as connection:
-            connection.execute(NEWS_SCHEMA)
             result = connection.execute("DELETE FROM news_items WHERE published_at < %s", (cutoff,))
             connection.commit()
             return max(0, int(result.rowcount or 0))
@@ -136,7 +107,6 @@ def known_news_ids(dsn: str) -> set[str]:
 
     try:
         with psycopg.connect(dsn) as connection:
-            connection.execute(NEWS_SCHEMA)
             rows = connection.execute("SELECT id FROM news_items").fetchall()
     except psycopg.Error as exc:
         raise RuntimeError("could not read known news ids from PostgreSQL") from exc
@@ -148,7 +118,6 @@ def load_news(dsn: str) -> list[dict[str, Any]]:
 
     try:
         with psycopg.connect(dsn) as connection:
-            connection.execute(NEWS_SCHEMA)
             rows = connection.execute(
                 f"SELECT {', '.join(_COLUMNS)} FROM news_items WHERE relevant ORDER BY published_at DESC LIMIT 500"
             ).fetchall()
