@@ -1,11 +1,11 @@
 import sys
 import types
 
-from app.db import INGESTION_RUN_SCHEMA, load_latest_ingestion_run, record_ingestion_run
+from app.db import load_latest_ingestion_run, record_ingestion_run
 from monitoring.logging import interaction_retention_days
 
 
-def test_ingestion_run_schema_and_round_trip_contract(monkeypatch):
+def test_ingestion_run_round_trip_contract(monkeypatch):
     calls = []
 
     class Connection:
@@ -43,7 +43,6 @@ def test_ingestion_run_schema_and_round_trip_contract(monkeypatch):
     }
     record_ingestion_run(report, "postgresql://example")
     latest = load_latest_ingestion_run("postgresql://example")
-    assert "CREATE TABLE IF NOT EXISTS ingestion_runs" in INGESTION_RUN_SCHEMA
     assert any(
         "INSERT INTO ingestion_runs" in query for query, _ in calls if isinstance(query, str)
     )

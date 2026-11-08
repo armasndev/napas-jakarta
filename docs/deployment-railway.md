@@ -67,6 +67,11 @@ Railway's production-shaped topology has four optional pieces:
    observations when configured and applies interaction retention cleanup for
    either PostgreSQL or the strict-$0 JSONL fallback.
 
+The PostgreSQL schema is owned by Alembic (`migrations/`). The API and ingestion
+services run `alembic upgrade head` as their Railway pre-deploy command, and
+Compose runs it in the `migrate` service; runtime code never creates tables.
+Add a schema change as a new file under `migrations/versions/`.
+
 Qdrant and Grafana are deliberately local-Compose services. Production uses the
 configured in-process `hybrid` retrieval method and the built-in aggregate
 Monitoring page, so they are not required by the Railway deployment.

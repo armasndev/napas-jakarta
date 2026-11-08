@@ -19,8 +19,8 @@ services:
         condition: service_completed_successfully
       index:
         condition: service_completed_successfully
-      postgres:
-        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
   api:
     build: .
     command: ["uvicorn", "app.api:app", "--host", "0.0.0.0", "--port", "8000"]
@@ -42,6 +42,14 @@ services:
         condition: service_completed_successfully
       index:
         condition: service_completed_successfully
+      migrate:
+        condition: service_completed_successfully
+  migrate:
+    build: .
+    command: ["alembic", "upgrade", "head"]
+    environment:
+      POSTGRES_DSN: postgresql://napas:napas@postgres:5432/napas
+    depends_on:
       postgres:
         condition: service_healthy
   ingest:
@@ -51,8 +59,8 @@ services:
       POSTGRES_DSN: postgresql://napas:napas@postgres:5432/napas
       SOURCE_DATA_URL: ${SOURCE_DATA_URL:-}
     depends_on:
-      postgres:
-        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
   index:
     build: .
     command: ["python", "-m", "ingestion.build_index", "--qdrant-url", "http://qdrant:6333", "--hybrid"]
@@ -71,7 +79,6 @@ services:
       POSTGRES_DB: napas
     volumes:
       - postgres_data:/var/lib/postgresql/data
-      - ./monitoring/schema.sql:/docker-entrypoint-initdb.d/schema.sql:ro,Z
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U napas -d napas"]
       interval: 5s

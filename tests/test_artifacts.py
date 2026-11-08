@@ -113,8 +113,8 @@ def test_compose_forwards_live_source_and_provider_settings():
     assert "http://localhost:6333/healthz" in (ROOT / "Makefile").read_text()
 
 
-def test_monitoring_schema_has_anonymous_session_id():
-    schema = (ROOT / "monitoring/schema.sql").read_text()
+def test_baseline_migration_has_anonymous_session_id():
+    schema = (ROOT / "migrations/versions/0001_baseline.py").read_text()
     assert "session_id TEXT" in schema
     assert "interaction_id TEXT" in schema
     assert "feedback_comment TEXT" in schema

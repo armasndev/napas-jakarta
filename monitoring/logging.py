@@ -128,66 +128,6 @@ def log_interaction(payload: dict[str, Any]) -> str:
             import psycopg
 
             with psycopg.connect(dsn) as connection:
-                # Railway Postgres is not initialized from docker-compose's
-                # schema mount. Create the base table here, then migrate
-                # older volumes safely before the first insert.
-                connection.execute(
-                    """CREATE TABLE IF NOT EXISTS interactions (
-                      id TEXT PRIMARY KEY,
-                      interaction_id TEXT,
-                      session_id TEXT,
-                      created_at TEXT NOT NULL,
-                      event TEXT NOT NULL DEFAULT 'answer',
-                      question TEXT NOT NULL,
-                      answer_text TEXT,
-                      rewritten_query TEXT,
-                      route TEXT,
-                      retrieval_mode TEXT,
-                      citation_grounded BOOLEAN,
-                      prompt_version TEXT,
-                      latency_ms DOUBLE PRECISION,
-                      token_usage INTEGER,
-                      estimated_cost DOUBLE PRECISION,
-                      data_age_seconds DOUBLE PRECISION,
-                      error_type TEXT,
-                      abstention_type TEXT,
-                      feedback TEXT,
-                      feedback_comment TEXT,
-                      source TEXT NOT NULL DEFAULT 'live'
-                    )"""
-                )
-                # Existing Compose volumes may predate these observability
-                # columns; migrate them safely before the first insert.
-                connection.execute(
-                    "ALTER TABLE interactions ADD COLUMN IF NOT EXISTS session_id TEXT"
-                )
-                connection.execute(
-                    "ALTER TABLE interactions ADD COLUMN IF NOT EXISTS answer_text TEXT"
-                )
-                connection.execute(
-                    "ALTER TABLE interactions ADD COLUMN IF NOT EXISTS interaction_id TEXT"
-                )
-                connection.execute(
-                    "ALTER TABLE interactions ADD COLUMN IF NOT EXISTS feedback_comment TEXT"
-                )
-                connection.execute(
-                    "ALTER TABLE interactions ADD COLUMN IF NOT EXISTS conversation_turn INTEGER"
-                )
-                connection.execute(
-                    "ALTER TABLE interactions ADD COLUMN IF NOT EXISTS history_messages INTEGER"
-                )
-                connection.execute(
-                    "ALTER TABLE interactions ADD COLUMN IF NOT EXISTS history_summary_chars INTEGER"
-                )
-                connection.execute(
-                    "ALTER TABLE interactions ADD COLUMN IF NOT EXISTS provider_model TEXT"
-                )
-                connection.execute(
-                    "ALTER TABLE interactions ADD COLUMN IF NOT EXISTS carried_entities TEXT"
-                )
-                connection.execute(
-                    "ALTER TABLE interactions ADD COLUMN IF NOT EXISTS source_count INTEGER"
-                )
                 connection.execute(
                     """INSERT INTO interactions
                     (id, interaction_id, session_id, created_at, event, question, answer_text, rewritten_query, route,

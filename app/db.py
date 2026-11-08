@@ -1,4 +1,7 @@
-"""Optional PostgreSQL repository for normalized structured measurements."""
+"""Optional PostgreSQL repository for normalized structured measurements.
+
+The schema is owned by Alembic (``migrations/``); nothing here creates tables.
+"""
 
 from __future__ import annotations
 
@@ -6,29 +9,6 @@ from collections.abc import Iterable
 from datetime import date, datetime
 
 from .models import Measurement
-
-MEASUREMENT_SCHEMA = """
-CREATE TABLE IF NOT EXISTS measurements (
-  station_id TEXT NOT NULL,
-  station_name TEXT NOT NULL,
-  district TEXT NOT NULL,
-  observed_at TIMESTAMPTZ NOT NULL,
-  pollutant TEXT NOT NULL,
-  concentration DOUBLE PRECISION,
-  concentration_unit TEXT NOT NULL,
-  ispu_value INTEGER NOT NULL,
-  ispu_category TEXT NOT NULL,
-  source TEXT NOT NULL,
-  averaging_period TEXT,
-  quality_flag TEXT,
-  fetched_at TIMESTAMPTZ,
-  PRIMARY KEY (station_id, observed_at, pollutant)
-)
-;
-ALTER TABLE measurements ADD COLUMN IF NOT EXISTS averaging_period TEXT;
-ALTER TABLE measurements ADD COLUMN IF NOT EXISTS quality_flag TEXT;
-ALTER TABLE measurements ADD COLUMN IF NOT EXISTS fetched_at TIMESTAMPTZ;
-"""
 
 
 def publish_measurements(measurements: Iterable[Measurement], dsn: str) -> int:
@@ -38,7 +18,6 @@ def publish_measurements(measurements: Iterable[Measurement], dsn: str) -> int:
 
     try:
         with psycopg.connect(dsn) as connection:
-            connection.execute(MEASUREMENT_SCHEMA)
             for item in rows:
                 connection.execute(
                     """INSERT INTO measurements
@@ -102,38 +81,12 @@ def load_measurements_from_db(dsn: str) -> list[Measurement]:
     ]
 
 
-HISTORICAL_SCHEMA = """
-CREATE TABLE IF NOT EXISTS historical_city_air_quality (
-  observed_date DATE PRIMARY KEY,
-  pm10 DOUBLE PRECISION,
-  pm2_5 DOUBLE PRECISION,
-  us_aqi DOUBLE PRECISION,
-  source TEXT NOT NULL,
-  refreshed_at TIMESTAMPTZ NOT NULL DEFAULT now()
-);
-"""
-
-
-INGESTION_RUN_SCHEMA = """
-CREATE TABLE IF NOT EXISTS ingestion_runs (
-  id BIGSERIAL PRIMARY KEY,
-  finished_at TIMESTAMPTZ NOT NULL,
-  source_url TEXT,
-  source_status TEXT NOT NULL,
-  measurement_rows INTEGER NOT NULL,
-  source_error TEXT
-);
-CREATE INDEX IF NOT EXISTS ingestion_runs_finished_at_idx ON ingestion_runs (finished_at DESC);
-"""
-
-
 def record_ingestion_run(report: dict, dsn: str) -> None:
     """Persist a completed station-ingestion fact for runtime provenance."""
     import psycopg
 
     try:
         with psycopg.connect(dsn) as connection:
-            connection.execute(INGESTION_RUN_SCHEMA)
             connection.execute(
                 """INSERT INTO ingestion_runs
                 (finished_at, source_url, source_status, measurement_rows, source_error)
@@ -158,7 +111,6 @@ def load_latest_ingestion_run(dsn: str) -> dict | None:
 
     try:
         with psycopg.connect(dsn) as connection:
-            connection.execute(INGESTION_RUN_SCHEMA)
             row = connection.execute(
                 """SELECT finished_at, source_url, source_status, measurement_rows, source_error
                    FROM ingestion_runs ORDER BY finished_at DESC LIMIT 1"""
@@ -189,7 +141,6 @@ def publish_historical_city(rows: Iterable[dict], dsn: str) -> int:
 
     try:
         with psycopg.connect(dsn) as connection:
-            connection.execute(HISTORICAL_SCHEMA)
             for row in values:
                 observed_date = row.get("date")
                 if isinstance(observed_date, datetime):
@@ -227,7 +178,6 @@ def load_historical_city_from_db(dsn: str) -> list[dict]:
 
     try:
         with psycopg.connect(dsn) as connection:
-            connection.execute(HISTORICAL_SCHEMA)
             rows = connection.execute(
                 """SELECT observed_date, pm10, pm2_5, us_aqi, source
                    FROM historical_city_air_quality ORDER BY observed_date"""
