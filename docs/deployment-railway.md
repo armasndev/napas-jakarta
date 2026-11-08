@@ -77,6 +77,11 @@ Railway's production-shaped topology has four optional pieces:
    data at `/news`, `/events`, `/timeline` and `/context/resolve` (internal token required).
    Until PostgreSQL holds news, the API serves a clearly marked demo fixture.
 
+The PostgreSQL schema is owned by Alembic (`migrations/`). The API and ingestion
+services run `alembic upgrade head` as their Railway pre-deploy command, and
+Compose runs it in the `migrate` service; runtime code never creates tables.
+Add a schema change as a new file under `migrations/versions/`.
+
 Qdrant and Grafana are deliberately local-Compose services. Production uses the
 configured in-process `hybrid` retrieval method and the built-in aggregate
 Monitoring page, so they are not required by the Railway deployment.
