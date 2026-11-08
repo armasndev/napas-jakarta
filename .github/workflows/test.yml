@@ -16,6 +16,30 @@ jobs:
       - run: uv run python -m pytest -q
       - run: uv run ruff check .
 
+  migrations:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_PASSWORD: test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      MIGRATION_TEST_DSN: postgresql://postgres:test@localhost:5432/postgres
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+        with:
+          version: "0.8.17"
+      - run: uv sync --frozen --extra dev
+      - run: uv run python -m pytest -q tests/test_migrations.py
+
   web:
     runs-on: ubuntu-latest
     defaults:
