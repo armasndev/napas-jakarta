@@ -67,6 +67,8 @@ status, and public health endpoint after each release.
 - The primary live source is the official Jakarta air-quality monitoring
   network, with source and station provenance retained for attribution.
 - Ingestion writes the current catalog and observations to Railway PostgreSQL.
+- The PostgreSQL schema is managed by Alembic migrations, applied as a pre-deploy
+  command on the API and ingestion services (pending merge and first deploy).
 - Readings older than the 24-hour freshness window are stale and must not be
   presented as current air-quality conditions. Readings within that window may
   be presented as fresh, with their timestamp still visible.

@@ -6,6 +6,7 @@ builder = "DOCKERFILE"
 dockerfilePath = "Dockerfile"
 
 [deploy]
+preDeployCommand = ["alembic", "upgrade", "head"]
 startCommand = "python -m ingestion.railway_cron"
 cronSchedule = "0 * * * *"
 restartPolicyType = "ON_FAILURE"
