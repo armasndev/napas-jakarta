@@ -6,7 +6,8 @@ import { validateEveRequestPayload } from "@/lib/user-input-limits";
 const MAX_CHAT_REQUEST_BYTES = 32_000;
 const EVE_TURN_PATH = /^\/eve\/v1\/session(?:\/[^/]+)?$/u;
 
-// Dev-only gate: when DEV_ACCESS_PASSWORD is set, every page needs HTTP basic auth (any username).
+// TEMPORARY dev-only gate: delete before dev replaces main (`git revert dcbf95e`); CI blocks PRs to
+// main while DEV_ACCESS_PASSWORD appears in web/. When DEV_ACCESS_PASSWORD is set, every page needs HTTP basic auth (any username).
 function devGate(request: NextRequest): NextResponse | undefined {
   const password = process.env.DEV_ACCESS_PASSWORD;
   if (!password) return undefined;

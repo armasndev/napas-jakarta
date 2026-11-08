@@ -40,6 +40,14 @@ jobs:
       - run: uv sync --frozen --extra dev
       - run: uv run python -m pytest -q tests/test_migrations.py
 
+  no-dev-gate:
+    if: github.base_ref == 'main'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: The temporary dev password gate must not reach main
+        run: "! grep -rn DEV_ACCESS_PASSWORD web --include=*.ts --include=*.tsx --exclude-dir=node_modules --exclude-dir=.next"
+
   web:
     runs-on: ubuntu-latest
     defaults:
